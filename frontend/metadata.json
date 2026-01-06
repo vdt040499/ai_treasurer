@@ -1,0 +1,7 @@
+{
+  "name": "Team Fund AI Tracker",
+  "description": "A modern team fund management dashboard featuring an AI assistant that extracts transaction details from bank screenshots and receipts using Gemini API.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
