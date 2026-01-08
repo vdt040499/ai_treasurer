@@ -8,35 +8,32 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 settings.validate()
 
-from app.core.queue_manager import queue_manager
+# from app.core.queue_manager import queue_manager
 from app.routers.ai_router import router as ai_router
 from app.routers.transaction_router import router as transaction_router
 from app.routers.user_router import router as user_router
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """
-    Application lifespan manager.
+# @asynccontextmanager
+# async def lifespan(app: FastAPI):
+#     """
+#     Application lifespan manager.
     
-    Handles startup and shutdown tasks.
-    """
-    # STARTUP: Start background worker
-    task = asyncio.create_task(queue_manager.worker())
-    print(f"Worker task created: {task}")
-    # Give event loop time to schedule task
-    await asyncio.sleep(0.1)
-    yield
-    # SHUTDOWN: Cancel worker task
-    task.cancel()
-    try:
-        await task
-    except asyncio.CancelledError:
-        print("Worker task cancelled")
+#     Handles startup and shutdown tasks.
+#     """
+#     task = asyncio.create_task(queue_manager.worker())
+#     print(f"Worker task created: {task}")
+#     await asyncio.sleep(0.1)
+#     yield
+#     task.cancel()
+#     try:
+#         await task
+#     except asyncio.CancelledError:
+#         print("Worker task cancelled")
 
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    lifespan=lifespan
+    # lifespan=lifespan
 )
 
 # Configure CORS

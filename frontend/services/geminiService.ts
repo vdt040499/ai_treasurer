@@ -2,16 +2,17 @@
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 import { TransactionType } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
-export const extractTransactionFromImage = async (base64Data: string, mimeType: string) => {
+export const extractTransactionFromImage = async (base64Data: string, mimeType: string, hint?: 'INCOME' | 'EXPENSE') => {
   const model = 'gemini-3-flash-preview';
   
   const systemInstruction = `
     Bạn là một trợ lý kế toán thông minh. Nhiệm vụ của bạn là phân tích hình ảnh (bill thanh toán, chuyển khoản ngân hàng, hóa đơn) và trích xuất thông tin giao dịch.
+    ${hint ? `Gợi ý: Đây có khả năng cao là giao dịch loại ${hint}.` : ''}
     
     Hãy xác định:
-    1. Loại giao dịch: INCOME (nếu là tiền vào, ví dụ chuyển khoản đóng quỹ) hoặc EXPENSE (nếu là hóa đơn mua hàng, chi tiêu).
+    1. Loại giao dịch: INCOME (nếu là tiền vào/đóng quỹ) hoặc EXPENSE (nếu là hóa đơn chi tiêu).
     2. Số tiền: Trích xuất con số chính xác.
     3. Ngày: Định dạng YYYY-MM-DD.
     4. Mô tả: Nội dung giao dịch.
@@ -58,5 +59,18 @@ export const extractTransactionFromImage = async (base64Data: string, mimeType: 
   } catch (error) {
     console.error("Error extracting data:", error);
     throw error;
+  }
+};
+
+export const getFoodSuggestion = async () => {
+  const model = 'gemini-3-flash-preview';
+  try {
+    const response = await ai.models.generateContent({
+      model,
+      contents: "Gợi ý 3 món ăn trưa hấp dẫn và phổ biến cho dân văn phòng tại Việt Nam hôm nay. Kèm theo lý do ngắn gọn tại sao nên ăn món đó. Trả về định dạng Markdown ngắn gọn.",
+    });
+    return response.text;
+  } catch (error) {
+    return "Hôm nay ăn Cơm Tấm cho chắc bụng nhé!";
   }
 };

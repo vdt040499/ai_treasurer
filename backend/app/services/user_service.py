@@ -1,4 +1,5 @@
 """User service for business logic."""
+import json
 from typing import List, Dict, Any, Optional
 from app.services.base_service import BaseService
 from app.models import UserCreate
@@ -18,9 +19,10 @@ class UserService(BaseService):
             Comma-separated string of member names
         """
         try:
-            response = self.client.table(self.table_name).select("name").execute()
-            names = [user['name'] for user in response.data]
-            return ", ".join(names)
+            response = self.client.table(self.table_name).select("name", "id").execute()
+            print('response: ', response.data)
+            names = [{ "id": user['id'], "name": user['name'] } for user in response.data]
+            return "[" + ", ".join([f"{{'id': {user['id']}, 'name': '{user['name']}'}}" for user in names]) + "]"
         except Exception:
             return ""
 

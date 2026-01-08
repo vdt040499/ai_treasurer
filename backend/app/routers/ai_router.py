@@ -35,21 +35,38 @@ async def chat(
         raise HTTPException(status_code=500, detail=f"AI processing failed: {str(e)}")
 
 @router.post("/ai/process-income-image")
-async def upload_image(
+async def upload_income_image(
     file: UploadFile = File(...),
     service: GeminiService = Depends(get_gemini_service)
 ):
     """
-    Process income image and extract transaction information.
+    Process income image, extract transaction information, and create transaction immediately.
     
     Args:
         file: Image file to process
         service: GeminiService instance
         
     Returns:
-        Created transaction with PENDING status
+        Created transaction with extracted data (status: COMPLETED)
     """
     try:
         return await service.process_income_image(file)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Image processing failed: {str(e)}")
+
+@router.post("/ai/process-expense-image")
+async def upload_expense_image(
+    file: UploadFile = File(...),
+    service: GeminiService = Depends(get_gemini_service)
+):
+    """
+    Process expense image, extract transaction information, and create transaction immediately.
+    """
+    try:
+        return await service.process_expense_image(file)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Image processing failed: {str(e)}")

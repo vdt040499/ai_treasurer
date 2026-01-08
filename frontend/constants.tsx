@@ -1,6 +1,8 @@
 
 import React from 'react';
 
+export const MONTHLY_FEE = 500000; // 500k VND per month
+
 export const CATEGORIES = [
   'Đóng quỹ',
   'Ăn uống',
@@ -16,10 +18,10 @@ export const MONTHS = [
 ];
 
 export const INITIAL_MEMBERS = [
-  { id: '1', name: 'Nguyễn Văn A', avatar: 'https://picsum.photos/seed/1/100', joinedDate: '2024-01', contributions: ['2024-01', '2024-02', '2024-03'] },
-  { id: '2', name: 'Trần Thị B', avatar: 'https://picsum.photos/seed/2/100', joinedDate: '2024-01', contributions: ['2024-01', '2024-02'] },
-  { id: '3', name: 'Lê Văn C', avatar: 'https://picsum.photos/seed/3/100', joinedDate: '2024-01', contributions: ['2024-01', '2024-03'] },
-  { id: '4', name: 'Phạm Minh D', avatar: 'https://picsum.photos/seed/4/100', joinedDate: '2024-02', contributions: ['2024-02', '2024-03'] },
+  { id: '1', name: 'Nguyễn Văn A', avatar: 'https://i.pravatar.cc/150?u=1', joinedDate: '2024-01', contributions: ['2024-01', '2024-02', '2024-03'] },
+  { id: '2', name: 'Trần Thị B', avatar: 'https://i.pravatar.cc/150?u=2', joinedDate: '2024-01', contributions: ['2024-01', '2024-02'] },
+  { id: '3', name: 'Lê Văn C', avatar: 'https://i.pravatar.cc/150?u=3', joinedDate: '2024-01', contributions: ['2024-01', '2024-03'] },
+  { id: '4', name: 'Phạm Minh D', avatar: 'https://i.pravatar.cc/150?u=4', joinedDate: '2024-02', contributions: ['2024-02', '2024-03'] },
 ];
 
 export const INITIAL_TRANSACTIONS = [

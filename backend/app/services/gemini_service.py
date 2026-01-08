@@ -16,8 +16,8 @@ from app.services.transaction_service import TransactionService
 env_path = Path(__file__).parent.parent.parent / '.env'
 load_dotenv(dotenv_path=env_path)
 
-SYSTEM_PROMPT_TEMPLATE = """
-Bạn là một trợ lý kế toán AI. Nhiệm vụ của bạn là trích xuất thông tin tài chính từ văn bản hoặc hình ảnh hóa đơn/chuyển khoản ngân hàng.
+INCOME_PROMPT_TEMPLATE = """
+Bạn là một trợ lý kế toán AI. Nhiệm vụ của bạn là trích xuất thông tin tài chính từ văn bản hoặc hình ảnh chuyển khoản ngân hàng.
 Hãy trả về kết quả CHỈ LÀ MỘT JSON duy nhất (không giải thích thêm) theo định dạng sau:
 
 Danh sách thành viên hợp lệ trong nhóm: {member_list}.
@@ -31,10 +31,20 @@ Quy tắc quan trọng về user_from:
     "user_from": "Tên người gửi (nếu có)",
     "id_from": "ID người gửi được lấy từ trong danh sách thành viên hợp lệ tương ứng với user_from",
     "user_to": "Tên người nhận (nếu có)",
-    "type": "INCOME" hoặc "EXPENSE",
     "amount": Số_nguyên (Ví dụ: 50000),
     "description": "Nội dung của giao dịch"
 }}
+"""
+
+EXPENSE_PROMPT_TEMPLATE = """
+Bạn là một trợ lý kế toán AI. Nhiệm vụ của bạn là trích xuất thông tin tài chính từ văn bản hoặc hình ảnh hóa đơn. 
+Hãy trả về kết quả CHỈ LÀ MỘT ARRAY JSON duy nhất. Mỗi phần tử trong array là một hóa đơn (không giải thích thêm) theo định dạng sau:
+
+[{
+    "transaction_date": "YYYY-MM-DD",
+    "bill_name": "Tên hoá đơn",
+    "amount": Tổng tiền của hoá đơn (Số_nguyên, Ví dụ: 50000)
+}]
 """
 
 class GeminiService:
@@ -49,23 +59,6 @@ class GeminiService:
 
         self.user_service = UserService()
         self.transaction_service = TransactionService()
-        # Use the global queue_manager instance to ensure same queue
-        self._queue_manager = None
-    
-    @property
-    def queue_manager(self):
-        """Get the global queue_manager instance"""
-        if self._queue_manager is None:
-            from app.core.queue_manager import queue_manager
-            self._queue_manager = queue_manager
-        return self._queue_manager
-
-    def _clean_json_string(self, json_str):
-        return json_str.replace("```json", "").replace("```", "").strip()
-
-    def _get_system_prompt(self):
-        members = self.user_service.get_all_member_names()
-        return SYSTEM_PROMPT_TEMPLATE.format(member_list=members)
 
     def chat_with_ai(self, message: str):
         system_prompt = self._get_system_prompt()
@@ -77,33 +70,102 @@ class GeminiService:
         return json.loads(clean_res)
 
     async def process_income_image(self, file: UploadFile):
-        # Lưu file vào temp file trước khi thêm vào queue
-        # Vì file object sẽ bị đóng sau khi request kết thúc
-        suffix = os.path.splitext(file.filename)[1] if file.filename else '.jpg'
-        temp_file_path = None
-        try:
-            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
-                temp_file_path = temp_file.name
-                content = await file.read()
-                temp_file.write(content)
+        """
+        Process income image, extract transaction data, and create transaction immediately.
+        
+        Args:
+            file: Image file to process
             
-            transaction = self.transaction_service.create_transaction(TransactionCreate(type="INCOME", description="Giao dịch đang xử lý", status="PENDING"))
-            transaction_id = transaction['id']
-            # Truyền file path thay vì file object
-            await self.queue_manager.add_task(transaction_id, "INCOME", { "file_path": temp_file_path, "filename": file.filename })
-            return transaction
-        except Exception as e:
-            # Clean up temp file nếu có lỗi
-            if temp_file_path and os.path.exists(temp_file_path):
-                os.unlink(temp_file_path)
-            raise HTTPException(status_code=500, detail=str(e))
+        Returns:
+            Created transaction with extracted data
+        """
+        extracted_data = await self._extract_transaction_from_image(file, "INCOME")
+        
+        # Handle case where id_from might be string or missing
+        user_id = extracted_data.get("id_from")
+        if isinstance(user_id, str) and user_id.isdigit():
+            user_id = int(user_id)
+        elif not isinstance(user_id, int) or user_id is None:
+            # Try to find user by name
+            user_from = extracted_data.get("user_from")
+            if user_from:
+                users = self.user_service.get_all()
+                matching_user = next((u for u in users if u.get("name") == user_from), None)
+                if matching_user:
+                    user_id = matching_user.get("id")
+                else:
+                    user_id = None
+        
+        transaction_data = TransactionCreate(
+            type="INCOME",
+            description=extracted_data.get("description", ""),
+            amount=extracted_data.get("amount"),
+            user_id=user_id,
+            transaction_date=extracted_data.get("transaction_date"),
+            status="COMPLETED"
+        )
+        
+        transaction = self.transaction_service.create_transaction(transaction_data)
+        
+        if not transaction:
+            raise HTTPException(status_code=500, detail="Failed to create transaction")
 
-    async def extract_transaction_from_image(self, file: UploadFile):
+        result = dict(transaction)
+        result["user_name"] = extracted_data.get("user_from")
+        return result
+
+    async def process_expense_image(self, file: UploadFile):
+        """
+        Process expense image, extract transaction information, and create transaction immediately.
+        
+        Args:
+            file: Image file to process
+            
+        Returns:
+            Created transactions with extracted data (status: COMPLETED)
+        """
+        extracted_data_list = await self._extract_transaction_from_image(file, "EXPENSE")
+        
+        # Ensure extracted_data_list is a list
+        if not isinstance(extracted_data_list, list):
+            extracted_data_list = [extracted_data_list]
+
+        transaction_creates = [
+            TransactionCreate(
+                type="EXPENSE",
+                description=extracted_data.get("bill_name"),
+                amount=extracted_data.get("amount"),
+                user_id=None,
+                transaction_date=extracted_data.get("transaction_date"),
+                status="COMPLETED"
+            )
+            for extracted_data in extracted_data_list
+        ]
+
+        created_transactions = self.transaction_service.create_transaction(transaction_creates)
+
+        if not created_transactions:
+            raise HTTPException(status_code=500, detail="Failed to create transaction")
+
+        return created_transactions
+
+    # Private methods
+
+    def _clean_json_string(self, json_str):
+        return json_str.replace("```json", "").replace("```", "").strip()
+
+    def _get_system_prompt(self, type: str = "INCOME"):
+        if type == "INCOME":
+            members = self.user_service.get_all_member_names()
+            return INCOME_PROMPT_TEMPLATE.format(member_list=members)
+        elif type == "EXPENSE":
+            return EXPENSE_PROMPT_TEMPLATE
+
+    async def _extract_transaction_from_image(self, file: UploadFile, type: str):
         temp_file_path = None
         try:
-            system_prompt = self._get_system_prompt()
+            system_prompt = self._get_system_prompt(type)
             
-            # Tạo file tạm
             suffix = os.path.splitext(file.filename)[1] if file.filename else '.jpg'
             with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
                 temp_file_path = temp_file.name
@@ -120,23 +182,13 @@ class GeminiService:
             
             # Generate content
             response = self.client.models.generate_content(
-                model='gemini-2.5-flash',
+                model='gemini-3-flash-preview',
                 contents=[system_prompt, uploaded_file]
             )
             
             clean_res = self._clean_json_string(response.text)
 
             # await asyncio.sleep(10)
-
-            # {
-            #     "transaction_date": "2026-01-06",
-            #     "user_from": "Võ Duy Tân",
-            #     "id_from": 3,
-            #     "user_to": "MOMO_TOMPAO",
-            #     "type": "EXPENSE",
-            #     "amount": 384000,
-            #     "description": "Vo Tan transfer money quickly via Zalo"
-            # }
 
             return json.loads(clean_res)
             # return {

@@ -79,17 +79,29 @@ class TransactionService(BaseService):
         
         return transformed_data
 
-    def create_transaction(self, transaction: TransactionCreate) -> Optional[Dict[str, Any]]:
+    def create_transaction(self, transaction_data: TransactionCreate | List[TransactionCreate]) -> Optional[Dict[str, Any]] | List[Dict[str, Any]]:
         """
-        Create a new transaction.
+        Create a new transaction or multiple transactions.
         
         Args:
-            transaction: Transaction data
+            transaction_data: Single transaction or list of transactions
             
         Returns:
-            Created transaction or None
+            Created transaction(s) or None/empty list
         """
-        return self.create(transaction.model_dump())
+        # Handle single transaction
+        if isinstance(transaction_data, TransactionCreate):
+            data = transaction_data.model_dump()
+            response = self.client.table(self.table_name).insert(data).execute()
+            return self._get_first_item(response.data)
+        
+        # Handle list of transactions
+        if isinstance(transaction_data, list):
+            data_list = [tx.model_dump() for tx in transaction_data]
+            response = self.client.table(self.table_name).insert(data_list).execute()
+            return response.data
+        
+        return None
 
     def update_transaction(self, id: int, transaction: TransactionCreate) -> Optional[Dict[str, Any]]:
         """

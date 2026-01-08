@@ -3,7 +3,7 @@ from typing import Optional
 
 class TransactionBase(BaseModel):
     type: str
-    description: str
+    description: Optional[str] = None
     amount: Optional[int] = None
     user_id: Optional[int] = None
     status: str
