@@ -1,29 +1,30 @@
-# Load environment variables FIRST, before any other imports
-from dotenv import load_dotenv
-from pathlib import Path
-
-from app.core.queue_manager import queue_manager
+"""Main application entry point."""
 from contextlib import asynccontextmanager
 import asyncio
-
-# Load .env file from the backend directory
-env_path = Path(__file__).parent.parent / '.env'
-load_dotenv(dotenv_path=env_path)
-
-# Now import other modules that may use environment variables
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+# Import config first to validate settings
+from app.core.config import settings
+settings.validate()
+
+from app.core.queue_manager import queue_manager
 from app.routers.ai_router import router as ai_router
 from app.routers.transaction_router import router as transaction_router
 from app.routers.user_router import router as user_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # STARTUP: Chạy worker trong background
+    """
+    Application lifespan manager.
+    
+    Handles startup and shutdown tasks.
+    """
+    # STARTUP: Start background worker
     task = asyncio.create_task(queue_manager.worker())
     print(f"Worker task created: {task}")
-    # Đảm bảo task được schedule
-    await asyncio.sleep(0.1)  # Cho event loop thời gian để schedule task
+    # Give event loop time to schedule task
+    await asyncio.sleep(0.1)
     yield
     # SHUTDOWN: Cancel worker task
     task.cancel()
@@ -32,12 +33,16 @@ async def lifespan(app: FastAPI):
     except asyncio.CancelledError:
         print("Worker task cancelled")
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    title=settings.APP_NAME,
+    version=settings.APP_VERSION,
+    lifespan=lifespan
+)
 
-# Cấu hình CORS
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Trong production nên set cụ thể domain frontend
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

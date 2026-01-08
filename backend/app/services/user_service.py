@@ -1,17 +1,46 @@
-from app.core.database import get_supabase_client
-from app.models import  UserCreate
+"""User service for business logic."""
+from typing import List, Dict, Any, Optional
+from app.services.base_service import BaseService
+from app.models import UserCreate
 
-class UserService:
+
+class UserService(BaseService):
+    """Service for user operations."""
+    
     def __init__(self):
-        self.client = get_supabase_client()
-        self.table_name = "users"
+        super().__init__(table_name="users")
 
-    def get_users(self):
-        response = self.client.table(self.table_name).select("*").order("created_at", desc=True).execute()
-        return response.data
+    def get_all_member_names(self) -> str:
+        """
+        Get all active member names as comma-separated string.
+        
+        Returns:
+            Comma-separated string of member names
+        """
+        try:
+            response = self.client.table(self.table_name).select("name").execute()
+            names = [user['name'] for user in response.data]
+            return ", ".join(names)
+        except Exception:
+            return ""
 
-    def create_user(self, user: UserCreate):
-        response = self.client.table(self.table_name).insert(user.model_dump()).execute()
+    def get_users(self) -> List[Dict[str, Any]]:
+        """
+        Get all users ordered by creation date.
+        
+        Returns:
+            List of users
+        """
+        return self.get_all(order_by="created_at", desc=True)
 
-        # Supabase returns a list, but we need to return a single user object
-        return response.data[0] if response.data else None
+    def create_user(self, user: UserCreate) -> Optional[Dict[str, Any]]:
+        """
+        Create a new user.
+        
+        Args:
+            user: User data
+            
+        Returns:
+            Created user or None
+        """
+        return self.create(user.model_dump())

@@ -64,14 +64,10 @@ class GeminiService:
         return json_str.replace("```json", "").replace("```", "").strip()
 
     def _get_system_prompt(self):
-        """Get system prompt with member list formatted"""
-        users_resp = self.user_service.get_users()
-        users = [{'name': user['name'], 'id': user['id']} for user in users_resp if user.get('active', False)]
-        member_list_str = json.dumps(users, ensure_ascii=False)
-        return SYSTEM_PROMPT_TEMPLATE.format(member_list=member_list_str)
+        members = self.user_service.get_all_member_names()
+        return SYSTEM_PROMPT_TEMPLATE.format(member_list=members)
 
     def chat_with_ai(self, message: str):
-        # Sử dụng model flash cho nhanh
         system_prompt = self._get_system_prompt()
         response = self.client.models.generate_content(
             model='gemini-2.5-flash', # Hoặc model bạn muốn

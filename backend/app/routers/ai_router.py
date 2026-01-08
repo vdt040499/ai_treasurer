@@ -1,23 +1,55 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+"""AI router endpoints."""
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from pydantic import BaseModel
 from app.services import GeminiService
 
 router = APIRouter()
-ai_service = GeminiService()
+
+# Dependency injection for service
+def get_gemini_service() -> GeminiService:
+    """Get GeminiService instance."""
+    return GeminiService()
 
 class ChatRequest(BaseModel):
+    """Chat request model."""
     message: str
 
 @router.post("/chat")
-async def chat(request: ChatRequest):
+async def chat(
+    request: ChatRequest,
+    service: GeminiService = Depends(get_gemini_service)
+):
+    """
+    Chat with AI to extract transaction information from text.
+    
+    Args:
+        request: Chat request with message
+        service: GeminiService instance
+        
+    Returns:
+        Extracted transaction data
+    """
     try:
-        return ai_service.chat_with_ai(request.message)
+        return service.chat_with_ai(request.message)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"AI processing failed: {str(e)}")
 
 @router.post("/ai/process-income-image")
-async def upload_image(file: UploadFile = File(...)):
+async def upload_image(
+    file: UploadFile = File(...),
+    service: GeminiService = Depends(get_gemini_service)
+):
+    """
+    Process income image and extract transaction information.
+    
+    Args:
+        file: Image file to process
+        service: GeminiService instance
+        
+    Returns:
+        Created transaction with PENDING status
+    """
     try:
-        return await ai_service.process_income_image(file)
+        return await service.process_income_image(file)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Image processing failed: {str(e)}")

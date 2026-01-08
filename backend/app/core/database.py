@@ -1,16 +1,23 @@
-import os
+"""Database configuration and client."""
 from supabase import create_client, Client
-from dotenv import load_dotenv
-from pathlib import Path
+from app.core.config import settings
 
-# Load .env file from the backend directory
-env_path = Path(__file__).parent.parent.parent / '.env'
-load_dotenv(dotenv_path=env_path)
+# Prefer service role key for backend (bypasses RLS), fallback to anon key
+key: str = settings.SUPABASE_SERVICE_ROLE_KEY or settings.SUPABASE_KEY
 
-url: str = os.environ.get("SUPABASE_URL")
-key: str = os.environ.get("SUPABASE_KEY")
+if not settings.SUPABASE_URL or not key:
+    raise ValueError(
+        "SUPABASE_URL and SUPABASE_KEY (or SUPABASE_SERVICE_ROLE_KEY) must be set in environment variables"
+    )
 
-supabase: Client = create_client(url, key)
+supabase: Client = create_client(settings.SUPABASE_URL, key)
+
 
 def get_supabase_client() -> Client:
+    """
+    Get Supabase client instance.
+    
+    Returns:
+        Supabase client
+    """
     return supabase
