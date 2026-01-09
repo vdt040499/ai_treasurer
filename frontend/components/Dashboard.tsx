@@ -36,7 +36,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-6 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
+        <div className="p-6 rounded-2xl bg-gradient-to-br from-blue-500 to-orange-500 text-white shadow-lg">
           <p className="text-blue-100 text-sm font-medium">Dư quỹ hiện tại</p>
           <h3 className="text-3xl font-bold mt-1">{formatCurrency(stats.balance)}</h3>
         </div>

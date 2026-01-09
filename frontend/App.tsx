@@ -74,14 +74,16 @@ const App: React.FC = () => {
         <header className="flex justify-between items-center mb-2 px-2">
           <div>
             <div className="flex items-center gap-3">
-              <div className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-xl shadow-indigo-200">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-orange-500 flex items-center justify-center text-white shadow-xl shadow-blue-200">
                  {/* <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                  </svg> */}
                  <img src="https://res.cloudinary.com/dqxrwqict/image/upload/v1767975904/Gemini_Generated_Image_duz4cduz4cduz4cd_ga2zve.png" alt="profile" className="w-full h-16 rounded-2xl object-cover object-center" />
               </div>
               <div>
-                <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">APPFUND</h1>
+                <h1 className="text-4xl font-black tracking-tight leading-none bg-gradient-to-r from-blue-600 via-blue-500 to-orange-500 bg-clip-text text-transparent drop-shadow-sm">
+                  APPFUND
+                </h1>
                 <p className="text-slate-500 font-bold text-xs uppercase tracking-tighter mt-1">Application Fund Control</p>
               </div>
             </div>
@@ -108,7 +110,7 @@ const App: React.FC = () => {
           </div>
           <div className="flex flex-col gap-6">
              <DebtTracker members={members} transactions={debtTransactions} />
-             <div className="p-6 rounded-3xl bg-gradient-to-br from-indigo-600 to-purple-700 text-white shadow-xl">
+             <div className="p-6 rounded-3xl bg-gradient-to-br from-blue-600 to-orange-500 text-white shadow-xl">
                 <h3 className="text-xl font-bold mb-2">Mẹo tiết kiệm 💡</h3>
                 <p className="text-white/80 text-sm leading-relaxed mb-4">
                   Sử dụng Gemini AI để tự động đọc bill giúp team bạn giảm thiểu sai sót lên đến 99% so với nhập tay.

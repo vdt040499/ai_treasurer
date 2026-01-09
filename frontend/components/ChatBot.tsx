@@ -145,7 +145,7 @@ const ChatBot: React.FC<ChatBotProps> = () => {
 
   return (
     <div className="flex flex-col h-full glass rounded-3xl overflow-hidden shadow-2xl border border-white/40">
-      <div className="p-5 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white flex items-center justify-between">
+      <div className="p-5 bg-gradient-to-r from-blue-600 via-blue-500 to-orange-500 text-white flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md ring-2 ring-white/30">
             {/* <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -175,7 +175,7 @@ const ChatBot: React.FC<ChatBotProps> = () => {
           <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[85%] p-3 rounded-2xl shadow-sm text-sm ${
               m.role === 'user' 
-                ? 'bg-indigo-600 text-white rounded-tr-none' 
+                ? 'bg-blue-600 text-white rounded-tr-none' 
                 : 'bg-white text-slate-700 rounded-tl-none border border-slate-100'
             }`}>
               {m.image && (
@@ -191,9 +191,9 @@ const ChatBot: React.FC<ChatBotProps> = () => {
           <div className="flex justify-start">
             <div className="bg-white p-3 rounded-2xl rounded-tl-none border border-slate-100 flex items-center gap-3">
               <div className="flex gap-1">
-                <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
-                <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
               </div>
               <span className="text-xs text-slate-500 font-bold italic">Gemini đang suy nghĩ...</span>
             </div>
@@ -202,7 +202,7 @@ const ChatBot: React.FC<ChatBotProps> = () => {
       </div>
 
       {stagedFile && (
-        <div className="p-3 bg-indigo-50 border-t border-indigo-100 flex items-center gap-3 animate-slide-up">
+        <div className="p-3 bg-blue-50 border-t border-blue-100 flex items-center gap-3 animate-slide-up">
            <div className="relative">
              <img src={stagedFile.data} className="w-16 h-16 object-cover rounded-lg border-2 border-white shadow-sm" alt="staged" />
              <button onClick={() => setStagedFile(null)} className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-1 shadow-md">
@@ -252,7 +252,7 @@ const ChatBot: React.FC<ChatBotProps> = () => {
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSendText()}
-            className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-slate-700"
+            className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700"
           />
 
           <button 
@@ -260,7 +260,7 @@ const ChatBot: React.FC<ChatBotProps> = () => {
             disabled={!inputText.trim()}
             className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all shadow-lg ${
               inputText.trim() 
-                ? 'bg-indigo-600 text-white hover:scale-105 active:scale-95' 
+                ? 'bg-blue-600 text-white hover:scale-105 active:scale-95' 
                 : 'bg-slate-200 text-slate-400 cursor-not-allowed'
             }`}
           >
