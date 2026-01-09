@@ -47,8 +47,8 @@ const DebtTracker: React.FC<DebtTrackerProps> = ({ members, transactions }) => {
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6">
-      <div className="p-5 border-b border-slate-100 bg-rose-50/30 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center text-rose-600">
+      <div className="p-5 border-b border-slate-100 bg-orange-50/30 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -69,8 +69,8 @@ const DebtTracker: React.FC<DebtTrackerProps> = ({ members, transactions }) => {
               </div>
             </div>
             <div className="text-right">
-              <div className="text-rose-600 font-black text-lg">{formatCurrency(debtor.totalDebt)}</div>
-              {/* <span className="inline-block px-2 py-0.5 bg-rose-100 text-rose-600 text-[10px] font-bold rounded uppercase">Cần nhắc nhở</span> */}
+              <div className="text-orange-600 font-black text-lg">{formatCurrency(debtor.totalDebt)}</div>
+              {/* <span className="inline-block px-2 py-0.5 bg-orange-100 text-orange-600 text-[10px] font-bold rounded uppercase">Cần nhắc nhở</span> */}
             </div>
           </div>
         )) : (

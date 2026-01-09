@@ -19,14 +19,70 @@ const ChatBot: React.FC<ChatBotProps> = () => {
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      // Reset input value to allow selecting the same file again
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setMessages(prev => [...prev, { 
+        role: 'ai', 
+        text: '❌ Vui lòng chọn file hình ảnh (jpg, png, etc.)' 
+      }]);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      setMessages(prev => [...prev, { 
+        role: 'ai', 
+        text: '❌ File quá lớn! Vui lòng chọn file nhỏ hơn 10MB' 
+      }]);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+
     const reader = new FileReader();
+    
     reader.onload = (e) => {
-      setStagedFile({
-        data: e.target?.result as string,
-        type: file.type
-      });
+      const result = e.target?.result;
+      if (result && typeof result === 'string') {
+        setStagedFile({
+          data: result,
+          type: file.type
+        });
+      } else {
+        setMessages(prev => [...prev, { 
+          role: 'ai', 
+          text: '❌ Lỗi khi đọc file. Vui lòng thử lại.' 
+        }]);
+      }
+      // Reset input value to allow selecting the same file again
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     };
+
+    reader.onerror = () => {
+      setMessages(prev => [...prev, { 
+        role: 'ai', 
+        text: '❌ Lỗi khi đọc file. Vui lòng thử lại.' 
+      }]);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    };
+
     reader.readAsDataURL(file);
   };
 
@@ -205,21 +261,21 @@ const ChatBot: React.FC<ChatBotProps> = () => {
         <div className="p-3 bg-blue-50 border-t border-blue-100 flex items-center gap-3 animate-slide-up">
            <div className="relative">
              <img src={stagedFile.data} className="w-16 h-16 object-cover rounded-lg border-2 border-white shadow-sm" alt="staged" />
-             <button onClick={() => setStagedFile(null)} className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-1 shadow-md">
+             <button onClick={() => setStagedFile(null)} className="absolute -top-2 -right-2 bg-orange-500 text-white rounded-full p-1 shadow-md">
                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
              </button>
            </div>
            <div className="flex-1 grid grid-cols-2 gap-2">
              <button 
               onClick={() => processImage('INCOME')}
-              className="py-2 px-3 bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-lg hover:bg-emerald-700 transition-all flex items-center justify-center gap-1"
+              className="py-2 px-3 bg-blue-600 text-white rounded-xl text-xs font-bold shadow-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-1"
              >
                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                Đóng Quỹ
              </button>
              <button 
               onClick={() => processImage('EXPENSE')}
-              className="py-2 px-3 bg-rose-600 text-white rounded-xl text-xs font-bold shadow-lg hover:bg-rose-700 transition-all flex items-center justify-center gap-1"
+              className="py-2 px-3 bg-orange-600 text-white rounded-xl text-xs font-bold shadow-lg hover:bg-orange-700 transition-all flex items-center justify-center gap-1"
              >
                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                Chi Tiêu
@@ -239,23 +295,35 @@ const ChatBot: React.FC<ChatBotProps> = () => {
           />
           <button 
             onClick={() => fileInputRef.current?.click()}
-            className="w-12 h-12 flex-shrink-0 flex items-center justify-center bg-slate-50 hover:bg-slate-100 text-slate-500 rounded-2xl border border-slate-200 transition-all"
+            className="flex-1 flex items-center justify-center gap-3 bg-white border-2 border-transparent bg-clip-padding rounded-2xl px-4 py-3 transition-all shadow-md hover:shadow-lg font-medium text-sm relative group"
+            style={{
+              backgroundImage: 'linear-gradient(white, white), linear-gradient(to right, #2563eb, #f97316)',
+              backgroundOrigin: 'border-box',
+              backgroundClip: 'padding-box, border-box'
+            }}
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24">
+              <defs>
+                <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#2563eb" />
+                  <stop offset="100%" stopColor="#f97316" />
+                </linearGradient>
+              </defs>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="url(#iconGradient)" />
             </svg>
+            <span className="bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent font-semibold">Tải hình màn hình chuyển khoản tại đây</span>
           </button>
           
-          <input 
+          {/* <input 
             type="text"
             placeholder="Nhập tin nhắn hoặc hỏi 'Ăn gì?'..."
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSendText()}
             className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700"
-          />
+          /> */}
 
-          <button 
+          {/* <button 
             onClick={handleSendText}
             disabled={!inputText.trim()}
             className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all shadow-lg ${
@@ -267,7 +335,7 @@ const ChatBot: React.FC<ChatBotProps> = () => {
             <svg className="w-5 h-5 rotate-90" fill="currentColor" viewBox="0 0 20 20">
               <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
             </svg>
-          </button>
+          </button> */}
         </div>
       </div>
     </div>

@@ -25,8 +25,8 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
 
   const chartData = useMemo(() => {
     return [
-      { name: 'Thu nhập', value: stats.income, color: '#22c55e' },
-      { name: 'Chi tiêu', value: stats.expense, color: '#ef4444' }
+      { name: 'Thu nhập', value: stats.income, color: '#2563eb' },
+      { name: 'Chi tiêu', value: stats.expense, color: '#f97316' }
     ];
   }, [stats]);
 
@@ -42,11 +42,11 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
         </div>
         <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
           <p className="text-slate-500 text-sm font-medium">Tổng thu</p>
-          <h3 className="text-3xl font-bold mt-1 text-green-600">{formatCurrency(stats.income)}</h3>
+          <h3 className="text-3xl font-bold mt-1 text-blue-600">{formatCurrency(stats.income)}</h3>
         </div>
         <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
           <p className="text-slate-500 text-sm font-medium">Tổng chi</p>
-          <h3 className="text-3xl font-bold mt-1 text-red-600">{formatCurrency(stats.expense)}</h3>
+          <h3 className="text-3xl font-bold mt-1 text-orange-600">{formatCurrency(stats.expense)}</h3>
         </div>
       </div>
 
