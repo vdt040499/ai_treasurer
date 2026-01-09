@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Transaction, TransactionType } from '../types';
 
 interface TransactionListProps {
@@ -10,6 +9,10 @@ interface TransactionListProps {
 const TransactionList: React.FC<TransactionListProps> = ({ transactions, isLoading = false }) => {
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
+
+  const sortedTransactions = useMemo(() => {
+    return transactions.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [transactions]);
 
   return (isLoading ? (
     <div className="p-12 flex flex-col items-center justify-center">
@@ -34,9 +37,9 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, isLoadi
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {transactions.map(t => (
+            {sortedTransactions.map(t => (
               <tr key={t.id} className="hover:bg-slate-50 transition-colors">
-                <td className="px-6 py-4 text-slate-500 whitespace-nowrap">{new Date(t.created_at).toLocaleDateString()}</td>
+                <td className="px-6 py-4 text-slate-500 whitespace-nowrap">{new Date(t.created_at).toLocaleDateString('vi-VN')}</td>
                 <td className="px-6 py-4">
                   <div>
                     <p className="font-medium text-slate-800">{t.description}</p>
@@ -57,7 +60,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, isLoadi
             ))}
           </tbody>
         </table>
-        {transactions.length === 0 && (
+        {sortedTransactions.length === 0 && (
           <div className="p-12 text-center text-slate-400">Chưa có giao dịch nào được ghi lại.</div>
         )}
       </div>

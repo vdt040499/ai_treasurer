@@ -8,7 +8,7 @@ interface ChatBotProps {
   onNewTransaction: (t: Transaction) => void;
 }
 
-const ChatBot: React.FC<ChatBotProps> = ({ onNewTransaction }) => {
+const ChatBot: React.FC<ChatBotProps> = () => {
   const [messages, setMessages] = useState<{role: 'user' | 'ai', text: string, image?: string}[]>([
     { role: 'ai', text: 'Xin chào! Tôi là trợ lý quản lý quỹ. Bạn có thể gửi ảnh biên lai hoặc màn hình chuyển khoản để tôi tự động cập nhật nhé!' }
   ]);
@@ -48,7 +48,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ onNewTransaction }) => {
           id: Date.now().toString(),
           ...extracted
         };
-        onNewTransaction(newTransaction);
+        // onNewTransaction(newTransaction);
         setMessages(prev => [...prev, { 
           role: 'ai', 
           text: `✅ Đã xong! Tôi đã ghi nhận: ${extracted.user_name || 'Giao dịch'}. Số tiền: ${new Intl.NumberFormat('vi-VN').format(extracted.amount)} VNĐ.` 
@@ -92,7 +92,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ onNewTransaction }) => {
             id: Date.now().toString() + Math.random(),
             ...tx
           };
-          onNewTransaction(newTransaction);
+          // onNewTransaction(newTransaction);
           
           // Create a separate message for each bill
           return {
@@ -148,16 +148,17 @@ const ChatBot: React.FC<ChatBotProps> = ({ onNewTransaction }) => {
       <div className="p-5 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md ring-2 ring-white/30">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {/* <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
+            </svg> */}
+            <img src="https://res.cloudinary.com/dqxrwqict/image/upload/v1767975904/Gemini_Generated_Image_duz4cduz4cduz4cd_ga2zve.png" alt="profile" className="w-full h-10 rounded-full object-cover object-center" />
           </div>
           <div>
-            <h3 className="font-bold">Gemini Finance AI</h3>
-            <p className="text-[10px] text-white/70 uppercase tracking-widest font-black">Powered by Google</p>
+            <h3 className="font-bold">AppFund Assistant</h3>
+            <p className="text-[10px] text-white/70 tracking-widest font-black">Assistant of Võ Tân</p>
           </div>
         </div>
-        <button 
+        {/* <button 
           onClick={triggerFoodSuggestion}
           className="p-2 hover:bg-white/10 rounded-lg transition-colors group relative"
           title="Gợi ý món ăn"
@@ -166,7 +167,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ onNewTransaction }) => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
           </svg>
           <span className="absolute -bottom-8 right-0 bg-slate-800 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity">Gợi ý món ăn</span>
-        </button>
+        </button> */}
       </div>
 
       <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/50 scroll-smooth">

@@ -1,43 +1,43 @@
 
 import React, { useState, useMemo } from 'react';
 import { Transaction, TransactionType } from '../types';
-import { MONTHS } from '../constants';
+import { getMonths } from '../utils/time';
+
+const MONTHS = getMonths();
 
 interface FoodExpenseTrackerProps {
   transactions: Transaction[];
   onAddExpense: (t: Transaction) => void;
 }
 
-const FoodExpenseTracker: React.FC<FoodExpenseTrackerProps> = ({ transactions, onAddExpense }) => {
-  const [selectedMonth, setSelectedMonth] = useState(MONTHS[MONTHS.length - 1]); // Default to current/last month
-  const [itemName, setItemName] = useState('');
-  const [amount, setAmount] = useState('');
+const FoodExpenseTracker: React.FC<FoodExpenseTrackerProps> = ({ transactions, isLoading }) => {
+  const [selectedMonth, setSelectedMonth] = useState(MONTHS[0]);
+  // const [itemName, setItemName] = useState('');
+  // const [amount, setAmount] = useState('');
+
+  // const handleAddItem = (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   if (!itemName || !amount) return;
+
+  //   const newExpense: Transaction = {
+  //     id: Date.now().toString(),
+  //     type: TransactionType.EXPENSE,
+  //     amount: parseFloat(amount),
+  //     date: `${selectedMonth}-01`, // Default to 1st of selected month for quick entry
+  //     description: itemName,
+  //     category: 'Ăn uống',
+  //   };
+
+  //   onAddExpense(newExpense);
+  //   setItemName('');
+  //   setAmount('');
+  // };
 
   const filteredExpenses = useMemo(() => {
     return transactions.filter(t => 
-      t.type === TransactionType.EXPENSE && 
-      t.category === 'Ăn uống' && 
-      t.date.startsWith(selectedMonth)
-    );
+      t.transaction_date.startsWith(selectedMonth)
+    ).sort((a, b) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime());
   }, [transactions, selectedMonth]);
-
-  const handleAddItem = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!itemName || !amount) return;
-
-    const newExpense: Transaction = {
-      id: Date.now().toString(),
-      type: TransactionType.EXPENSE,
-      amount: parseFloat(amount),
-      date: `${selectedMonth}-01`, // Default to 1st of selected month for quick entry
-      description: itemName,
-      category: 'Ăn uống',
-    };
-
-    onAddExpense(newExpense);
-    setItemName('');
-    setAmount('');
-  };
 
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
@@ -65,7 +65,7 @@ const FoodExpenseTracker: React.FC<FoodExpenseTrackerProps> = ({ transactions, o
       </div>
 
       <div className="p-6">
-        <form onSubmit={handleAddItem} className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-8">
+        {/* <form onSubmit={handleAddItem} className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-8">
           <div className="md:col-span-7">
             <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Tên món ăn / Dịch vụ</label>
             <input 
@@ -94,20 +94,28 @@ const FoodExpenseTracker: React.FC<FoodExpenseTrackerProps> = ({ transactions, o
               Thêm món
             </button>
           </div>
-        </form>
+        </form> */}
 
         <div className="overflow-hidden border border-slate-100 rounded-xl">
           <table className="w-full text-sm text-left">
             <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
               <tr>
                 <th className="px-6 py-3">Tên món ăn</th>
+                <th className="px-6 py-3">Ngày mua</th>
                 <th className="px-6 py-3 text-right">Số tiền</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredExpenses.map(item => (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={2} className="px-6 py-10 text-center text-slate-400 italic">
+                    Đang tải dữ liệu...
+                  </td>
+                </tr>
+              ) : filteredExpenses.map(item => (
                 <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="px-6 py-4 font-medium text-slate-700">{item.description}</td>
+                  <td className="px-6 py-4 text-slate-500 whitespace-nowrap">{new Date(item.created_at).toLocaleDateString('vi-VN')}</td>
                   <td className="px-6 py-4 text-right font-bold text-red-500">{formatCurrency(item.amount)}</td>
                 </tr>
               ))}
@@ -122,9 +130,10 @@ const FoodExpenseTracker: React.FC<FoodExpenseTrackerProps> = ({ transactions, o
             {filteredExpenses.length > 0 && (
               <tfoot className="bg-slate-50/50">
                 <tr>
-                  <td className="px-6 py-4 font-bold text-slate-800">Tổng cộng tháng {selectedMonth.split('-')[1]}</td>
+                  <td className="px-6 py-4 font-bold text-slate-800">Tổng chi tiêu tháng {selectedMonth.split('-')[1]}</td>
+                  <td className="px-6 py-4 text-slate-500 whitespace-nowrap"></td>
                   <td className="px-6 py-4 text-right font-black text-slate-900 text-lg">
-                    {formatCurrency(filteredExpenses.reduce((sum, i) => sum + i.amount, 0))}
+                    {formatCurrency(transactions.reduce((sum, i) => sum + i.amount, 0))}
                   </td>
                 </tr>
               </tfoot>

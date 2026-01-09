@@ -1,27 +1,46 @@
 
 import React, { useMemo } from 'react';
-import { Member } from '../types';
+import { Member, Transaction } from '../types';
 import { MONTHS, MONTHLY_FEE } from '../constants';
+import { TransactionType } from '../types';
 
 interface DebtTrackerProps {
   members: Member[];
+  transactions: Transaction[];
 }
 
-const DebtTracker: React.FC<DebtTrackerProps> = ({ members }) => {
+const DebtTracker: React.FC<DebtTrackerProps> = ({ members, transactions }) => {
   const currentMonth = new Date().toISOString().substring(0, 7);
 
   const debts = useMemo(() => {
     return members.map(member => {
-      // Find months that should have been paid up to current month
       const unpaidMonths = MONTHS.filter(m => m <= currentMonth && !member.contributions.includes(m));
-      const totalDebt = unpaidMonths.length * MONTHLY_FEE;
+
+      console.log('transactions', transactions);
+      console.log('member', member);
+
+      const unpaidTransaction = transactions.find(t => 
+        t.type === TransactionType.DEBT && 
+        String(t.user_id) === String(member.id)
+      );
+
+      console.log('unpaidTransaction', unpaidTransaction);
+
+      const unpaidAmount = unpaidTransaction?.amount || 0;
+      const unpaidDescription = unpaidTransaction?.description || '';
+
+      const totalDebt = unpaidAmount + unpaidMonths.length * MONTHLY_FEE;
+
       return {
         ...member,
         unpaidMonths,
-        totalDebt
+        totalDebt,
+        unpaidDescription
       };
     }).filter(d => d.totalDebt > 0).sort((a, b) => b.totalDebt - a.totalDebt);
-  }, [members, currentMonth]);
+  }, [members, transactions, currentMonth]);
+
+  console.log(debts);
 
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
@@ -46,12 +65,12 @@ const DebtTracker: React.FC<DebtTrackerProps> = ({ members }) => {
               <img src={debtor.avatar} alt={debtor.name} className="w-12 h-12 rounded-full border-2 border-white shadow-sm" />
               <div>
                 <h4 className="font-bold text-slate-800">{debtor.name}</h4>
-                <p className="text-xs text-slate-500">Thiếu: {debtor.unpaidMonths.join(', ')}</p>
+                <p className="text-xs text-slate-500">Thiếu: Quỹ tháng {debtor.unpaidMonths.map(m => m.split('-')[1]).join(', ')} và tiền {debtor.unpaidDescription}</p>
               </div>
             </div>
             <div className="text-right">
               <div className="text-rose-600 font-black text-lg">{formatCurrency(debtor.totalDebt)}</div>
-              <span className="inline-block px-2 py-0.5 bg-rose-100 text-rose-600 text-[10px] font-bold rounded uppercase">Cần nhắc nhở</span>
+              {/* <span className="inline-block px-2 py-0.5 bg-rose-100 text-rose-600 text-[10px] font-bold rounded uppercase">Cần nhắc nhở</span> */}
             </div>
           </div>
         )) : (

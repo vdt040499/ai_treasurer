@@ -1,19 +1,11 @@
 
 import React from 'react';
 import { Member } from '../types';
+import { getMonths } from '../utils/time';
 
 interface MemberStatusProps {
   members: Member[];
   isLoading?: boolean;
-}
-
-const getMonths = () => {
-  const currentYear = new Date().getFullYear();
-  const months = [];
-  for (let i = 1; i <= 12; i++) {
-    months.push(`${currentYear}-${String(i).padStart(2, '0')}`);
-  }
-  return months;
 }
 
 const MONTHS = getMonths();

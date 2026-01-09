@@ -39,6 +39,9 @@ class TransactionService(BaseService):
         # Nếu không work, thử: users!user_id(*) hoặc users!inner(*)
         query = self.client.table(self.table_name).select("*, users(*)").order("transaction_date", desc=True)
 
+        # Filter for amount greater than 0
+        query = query.gt("amount", 0)
+
         if status:
             query = query.eq("status", status)
         if type:
@@ -159,6 +162,7 @@ class TransactionService(BaseService):
         query = self.client.table(self.table_name).select("transaction_date, amount, users!inner(*)").order("transaction_date", desc=True)
 
         query = query.eq("type", "INCOME")
+        query = query.gt("amount", 0)
 
         if start_date:
             query = query.gte("transaction_date", start_date)

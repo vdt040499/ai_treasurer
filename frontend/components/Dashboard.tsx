@@ -37,7 +37,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="p-6 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
-          <p className="text-blue-100 text-sm font-medium">Số dư hiện tại</p>
+          <p className="text-blue-100 text-sm font-medium">Dư quỹ hiện tại</p>
           <h3 className="text-3xl font-bold mt-1">{formatCurrency(stats.balance)}</h3>
         </div>
         <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
@@ -50,7 +50,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
         </div>
       </div>
 
-      <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm h-64">
+      {/* <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm h-64">
         <h4 className="text-sm font-semibold text-slate-700 mb-4">Tổng quan Thu/Chi</h4>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData}>
@@ -68,7 +68,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
             </Bar>
           </BarChart>
         </ResponsiveContainer>
-      </div>
+      </div> */}
     </div>
   );
 };
