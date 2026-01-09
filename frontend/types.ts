@@ -18,8 +18,8 @@ export interface Member {
   id: string;
   name: string;
   avatar: string;
-  joinedDate: string;
-  contributions: string[]; // List of YYYY-MM
+  created_at: string;
+  contributions: string[];
 }
 
 export interface FundStats {

@@ -4,17 +4,21 @@ import { Transaction, TransactionType } from '../types';
 
 interface TransactionListProps {
   transactions: Transaction[];
+  isLoading?: boolean;
 }
 
-const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
+const TransactionList: React.FC<TransactionListProps> = ({ transactions, isLoading = false }) => {
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
 
-  const sortedTransactions = [...transactions].sort((a, b) => 
-    new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
-
-  return (
+  return (isLoading ? (
+    <div className="p-12 flex flex-col items-center justify-center">
+      <div className="relative">
+        <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+      </div>
+      <p className="mt-4 text-slate-600 text-sm font-medium">Đang tải dữ liệu...</p>
+    </div>
+  ) : (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mt-6">
       <div className="p-4 border-b border-slate-100 bg-slate-50/50">
         <h3 className="font-semibold text-slate-800">Lịch sử giao dịch</h3>
@@ -30,7 +34,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {sortedTransactions.map(t => (
+            {transactions.map(t => (
               <tr key={t.id} className="hover:bg-slate-50 transition-colors">
                 <td className="px-6 py-4 text-slate-500 whitespace-nowrap">{t.date}</td>
                 <td className="px-6 py-4">
@@ -41,7 +45,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
                 </td>
                 <td className="px-6 py-4">
                   <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-                    {t.category}
+                    {t.type === TransactionType.INCOME ? 'Đóng quỹ' : 'Chi tiêu'}
                   </span>
                 </td>
                 <td className={`px-6 py-4 text-right font-semibold ${
@@ -58,7 +62,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
         )}
       </div>
     </div>
-  );
+  ));
 };
 
 export default TransactionList;

@@ -8,17 +8,49 @@ import FoodExpenseTracker from './components/FoodExpenseTracker';
 import DebtTracker from './components/DebtTracker';
 import { Transaction, Member, TransactionType } from './types';
 import { INITIAL_MEMBERS, INITIAL_TRANSACTIONS } from './constants';
+import { getUsersWithContributions } from './services/userService';
+import { getTransactions } from './services/transactionService';
 
 const App: React.FC = () => {
-  const [members, setMembers] = useState<Member[]>(INITIAL_MEMBERS);
-  const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isLoadingMembers, setIsLoadingMembers] = useState<boolean>(true);
+  const [isLoadingTransactions, setIsLoadingTransactions] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchUsersWithContributions = async () => {
+      try {
+        setIsLoadingMembers(true);
+        const users = await getUsersWithContributions();
+        setMembers(users);
+      } catch (error) {
+        console.error('Failed to fetch users:', error);
+      } finally {
+        setIsLoadingMembers(false);
+      }
+    };
+
+    const fetchTransactions = async () => {
+      try {
+        setIsLoadingTransactions(true);
+        const transactions = await getTransactions();
+        setTransactions(transactions);
+      } catch (error) {
+        console.error('Failed to fetch transactions:', error);
+      } finally {
+        setIsLoadingTransactions(false);
+      }
+    };
+
+    fetchUsersWithContributions();
+    fetchTransactions();
+  }, []);
 
   const handleNewTransaction = (t: Transaction) => {
     setTransactions(prev => [...prev, t]);
 
-    // If it's an income related to a member contribution, update member status
     if (t.type === TransactionType.INCOME && t.category === 'Đóng quỹ' && t.personName) {
-      const monthFromDate = t.date.substring(0, 7); // YYYY-MM
+      const monthFromDate = t.date.substring(0, 7);
       setMembers(prevMembers => prevMembers.map(m => {
         if (m.name.toLowerCase().includes(t.personName!.toLowerCase())) {
           return {
@@ -54,7 +86,7 @@ const App: React.FC = () => {
           <div className="flex items-center gap-4">
              <div className="hidden sm:flex items-center gap-2 bg-emerald-50 text-emerald-600 px-4 py-2 rounded-2xl border border-emerald-100 font-bold text-xs">
                 <span className="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></span>
-                LIVE UPDATES
+                Đóng quỹ nè mọi người ơi !!!
              </div>
              <img src="https://i.pravatar.cc/150?u=me" className="w-10 h-10 rounded-full border-2 border-white shadow-md cursor-pointer hover:scale-105 transition-transform" alt="profile" />
           </div>
@@ -64,12 +96,12 @@ const App: React.FC = () => {
         
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           <div className="xl:col-span-2 flex flex-col gap-6">
-            <MemberStatus members={members} />
+            <MemberStatus members={members} isLoading={isLoadingMembers} />
             <FoodExpenseTracker 
               transactions={transactions} 
               onAddExpense={handleNewTransaction} 
             />
-            <TransactionList transactions={transactions} />
+            <TransactionList transactions={transactions} isLoading={isLoadingTransactions} />
           </div>
           <div className="flex flex-col gap-6">
              <DebtTracker members={members} />
