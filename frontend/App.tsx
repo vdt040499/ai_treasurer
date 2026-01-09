@@ -68,9 +68,22 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#f1f5f9] flex flex-col lg:flex-row p-4 md:p-6 gap-6 max-w-[1600px] mx-auto">
+    <div className="min-h-screen relative flex flex-col lg:flex-row p-4 md:p-6 gap-6 max-w-[1600px] mx-auto">
+      {/* Background với gradient và pattern */}
+      <div className="fixed inset-0 -z-10 bg-gradient-to-br from-blue-50 via-white to-orange-50"></div>
+      <div 
+        className="fixed inset-0 -z-10 opacity-30"
+        style={{
+          backgroundImage: `radial-gradient(circle at 2px 2px, rgba(37, 99, 235, 0.15) 1px, transparent 0)`,
+          backgroundSize: '40px 40px'
+        }}
+      ></div>
+      {/* Gradient orbs để tạo depth */}
+      <div className="fixed top-0 left-1/4 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+      <div className="fixed top-0 right-1/4 w-96 h-96 bg-orange-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+      <div className="fixed -bottom-8 left-1/2 w-96 h-96 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col gap-6 order-2 lg:order-1">
+      <div className="flex-1 flex flex-col gap-6 order-2 lg:order-1 relative z-0">
         <header className="flex justify-between items-center mb-2 px-2">
           <div>
             <div className="flex items-center gap-3">
@@ -124,7 +137,7 @@ const App: React.FC = () => {
       </div>
 
       {/* AI Assistant Sidebar */}
-      <aside className="w-full lg:w-96 flex-shrink-0 lg:sticky lg:top-6 self-start order-1 lg:order-2" style={{ height: 'calc(100vh - 48px)' }}>
+      <aside className="w-full lg:w-96 flex-shrink-0 lg:sticky lg:top-6 self-start order-1 lg:order-2 relative z-0" style={{ height: 'calc(100vh - 48px)' }}>
         <ChatBot />
       </aside>
     </div>
