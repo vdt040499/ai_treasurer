@@ -10,6 +10,7 @@ import { Transaction, Member, TransactionType } from './types';
 import { INITIAL_MEMBERS, INITIAL_TRANSACTIONS } from './constants';
 import { getUsersWithContributions } from './services/userService';
 import { getTransactions } from './services/transactionService';
+import { getCurrentMonth, getCurrentYear } from './utils/time';
 
 const App: React.FC = () => {
   const [members, setMembers] = useState<Member[]>([]);
@@ -49,10 +50,10 @@ const App: React.FC = () => {
   const handleNewTransaction = (t: Transaction) => {
     setTransactions(prev => [...prev, t]);
 
-    if (t.type === TransactionType.INCOME && t.category === 'Đóng quỹ' && t.personName) {
+    if (t.type === TransactionType.INCOME && t.category === 'Đóng quỹ' && t.user!.name) {
       const monthFromDate = t.date.substring(0, 7);
       setMembers(prevMembers => prevMembers.map(m => {
-        if (m.name.toLowerCase().includes(t.personName!.toLowerCase())) {
+        if (m.name.toLowerCase().includes(t.user!.name!.toLowerCase())) {
           return {
             ...m,
             contributions: m.contributions.includes(monthFromDate) 
@@ -86,9 +87,9 @@ const App: React.FC = () => {
           <div className="flex items-center gap-4">
              <div className="hidden sm:flex items-center gap-2 bg-emerald-50 text-emerald-600 px-4 py-2 rounded-2xl border border-emerald-100 font-bold text-xs">
                 <span className="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></span>
-                Đóng quỹ nè mọi người ơi !!!
+                Đóng quỹ tháng {getCurrentMonth()} năm {getCurrentYear()} nè mọi người ơi !!!
              </div>
-             <img src="https://i.pravatar.cc/150?u=me" className="w-10 h-10 rounded-full border-2 border-white shadow-md cursor-pointer hover:scale-105 transition-transform" alt="profile" />
+             <img src="https://res.cloudinary.com/dqxrwqict/image/upload/v1767952876/558059282_4215333502071903_3524589644306170946_n_jnxikb.jpg" className="w-10 h-10 rounded-full border-2 border-white shadow-md cursor-pointer hover:scale-105 transition-transform" alt="profile" />
           </div>
         </header>
 

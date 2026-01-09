@@ -11,7 +11,8 @@ export interface Transaction {
   date: string;
   description: string;
   category: string;
-  personName?: string;
+  user: Member;
+  created_at: string;
 }
 
 export interface Member {

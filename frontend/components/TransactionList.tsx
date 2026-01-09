@@ -36,11 +36,11 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, isLoadi
           <tbody className="divide-y divide-slate-100">
             {transactions.map(t => (
               <tr key={t.id} className="hover:bg-slate-50 transition-colors">
-                <td className="px-6 py-4 text-slate-500 whitespace-nowrap">{t.date}</td>
+                <td className="px-6 py-4 text-slate-500 whitespace-nowrap">{new Date(t.created_at).toLocaleDateString()}</td>
                 <td className="px-6 py-4">
                   <div>
                     <p className="font-medium text-slate-800">{t.description}</p>
-                    {t.personName && <p className="text-xs text-slate-400 mt-0.5">Người nộp: {t.personName}</p>}
+                    {t?.user?.name && <p className="text-xs text-slate-400 mt-0.5">Người nộp: {t?.user?.name}</p>}
                   </div>
                 </td>
                 <td className="px-6 py-4">
