@@ -21,44 +21,83 @@ const App: React.FC = () => {
   const [isLoadingTransactions, setIsLoadingTransactions] = useState<boolean>(true);
 
   useEffect(() => {
-    const fetchUsersWithContributions = async () => {
+    let isFirstLoad = true;
+
+    const fetchUsersWithContributions = async (showLoading: boolean = true) => {
       try {
-        setIsLoadingMembers(true);
+        if (showLoading) {
+          setIsLoadingMembers(true);
+        }
         const users = await getUsersWithContributions();
         setMembers(users);
       } catch (error) {
         console.error('Failed to fetch users:', error);
       } finally {
-        setIsLoadingMembers(false);
+        if (showLoading) {
+          setIsLoadingMembers(false);
+        }
       }
     };
 
-    const fetchTransactions = async () => {
+    const fetchTransactions = async (showLoading: boolean = true) => {
       try {
-        setIsLoadingTransactions(true);
+        if (showLoading) {
+          setIsLoadingTransactions(true);
+        }
         const transactions = await getTransactions();
 
         const incomeTransactions = transactions.filter(t => t.type === TransactionType.INCOME);
         const expenseTransactions = transactions.filter(t => t.type === TransactionType.EXPENSE);
         const debtTransactions = transactions.filter(t => t.type === TransactionType.DEBT);
 
-        setIncomeTransactions(incomeTransactions);
-        setExpenseTransactions(expenseTransactions);
-        setDebtTransactions(debtTransactions);
-        setDashboardTransactions([...incomeTransactions, ...expenseTransactions]);
+        // Chỉ update state nếu data thay đổi để tránh re-render không cần thiết
+        setIncomeTransactions(prev => {
+          const prevIds = new Set(prev.map(t => t.id));
+          const newIds = new Set(incomeTransactions.map(t => t.id));
+          if (prevIds.size === newIds.size && [...prevIds].every(id => newIds.has(id))) {
+            return prev; // Không đổi nếu IDs giống nhau
+          }
+          return incomeTransactions;
+        });
+        
+        setExpenseTransactions(prev => {
+          const prevIds = new Set(prev.map(t => t.id));
+          const newIds = new Set(expenseTransactions.map(t => t.id));
+          if (prevIds.size === newIds.size && [...prevIds].every(id => newIds.has(id))) {
+            return prev;
+          }
+          return expenseTransactions;
+        });
+        
+        setDebtTransactions(prev => {
+          const prevIds = new Set(prev.map(t => t.id));
+          const newIds = new Set(debtTransactions.map(t => t.id));
+          if (prevIds.size === newIds.size && [...prevIds].every(id => newIds.has(id))) {
+            return prev;
+          }
+          return debtTransactions;
+        });
+        
+        // Dashboard cần cả INCOME, DEBT, và EXPENSE để tính chính xác
+        setDashboardTransactions([...incomeTransactions, ...expenseTransactions, ...debtTransactions]);
       } catch (error) {
         console.error('Failed to fetch transactions:', error);
       } finally {
-        setIsLoadingTransactions(false);
+        if (showLoading) {
+          setIsLoadingTransactions(false);
+        }
       }
     };
 
-    fetchUsersWithContributions();
-    fetchTransactions();
+    // Lần đầu load với loading state
+    fetchUsersWithContributions(true);
+    fetchTransactions(true);
+    isFirstLoad = false;
 
+    // Interval reload không set loading để tránh UI bị dựt
     const intervalId = setInterval(() => {
-      fetchUsersWithContributions();
-      fetchTransactions();
+      fetchUsersWithContributions(false);
+      fetchTransactions(false);
     }, 60000);
 
     // Cleanup interval on unmount
@@ -119,10 +158,14 @@ const App: React.FC = () => {
               isLoading={isLoadingTransactions}
               transactions={expenseTransactions} 
             />
-            <TransactionList transactions={incomeTransactions} isLoading={isLoadingTransactions} />
+            <TransactionList 
+              transactions={[...incomeTransactions, ...debtTransactions]} 
+              members={members} 
+              isLoading={isLoadingTransactions} 
+            />
           </div>
           <div className="flex flex-col gap-6">
-             <DebtTracker members={members} transactions={debtTransactions} />
+             <DebtTracker members={members} />
              <div className="p-6 rounded-3xl bg-gradient-to-br from-blue-600 to-orange-500 text-white shadow-xl">
                 <h3 className="text-xl font-bold mb-2">Mẹo tiết kiệm 💡</h3>
                 <p className="text-white/80 text-sm leading-relaxed mb-4">

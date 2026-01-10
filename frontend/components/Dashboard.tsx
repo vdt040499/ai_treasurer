@@ -1,6 +1,7 @@
 
 import React, { useMemo } from 'react';
 import { Transaction, TransactionType } from '../types';
+import { MONTHLY_FEE } from '../constants';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 interface DashboardProps {
@@ -9,16 +10,62 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
   const stats = useMemo(() => {
-    const totalIncome = transactions
-      .filter(t => t.type === TransactionType.INCOME)
-      .reduce((sum, t) => sum + t.amount, 0);
+    // Tính số tháng hiện tại (từ đầu năm đến tháng hiện tại)
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth() + 1; // 1-12
+    const monthCount = currentMonth;
+
+    // Group transactions theo user_id
+    const userTransactions: { [userId: string]: { income: number; debt: number } } = {};
+    let incomeWithoutUser = 0; // Income không có user_id (cộng trực tiếp)
+    
+    transactions.forEach(t => {
+      const userId = (t as any).user_id || t.user?.id;
+      
+      if (t.type === TransactionType.INCOME) {
+        if (userId) {
+          if (!userTransactions[userId]) {
+            userTransactions[userId] = { income: 0, debt: 0 };
+          }
+          userTransactions[userId].income += t.amount;
+        } else {
+          // Income không có user_id thì cộng trực tiếp
+          incomeWithoutUser += t.amount;
+        }
+      } else if (t.type === TransactionType.DEBT) {
+        if (userId) {
+          if (!userTransactions[userId]) {
+            userTransactions[userId] = { income: 0, debt: 0 };
+          }
+          userTransactions[userId].debt += t.amount;
+        }
+        // Debt không có user_id thì bỏ qua (không xử lý)
+      }
+    });
+
+    // Tính tổng thu theo từng thành viên
+    let totalNetIncome = incomeWithoutUser; // Bắt đầu với income không có user
+
+    Object.entries(userTransactions).forEach(([userId, userData]) => {
+      const { income, debt } = userData;
+      const requiredAmount = monthCount * MONTHLY_FEE + debt;
+      
+      // Nếu income > (số tháng * MONTHLY_FEE + debt) thì mới trừ debt
+      if (income > requiredAmount) {
+        totalNetIncome += income - debt;
+      } else {
+        // Không trừ debt
+        totalNetIncome += income;
+      }
+    });
+
     const totalExpense = transactions
       .filter(t => t.type === TransactionType.EXPENSE)
       .reduce((sum, t) => sum + t.amount, 0);
     
     return {
-      balance: totalIncome - totalExpense,
-      income: totalIncome,
+      balance: totalNetIncome - totalExpense,
+      income: totalNetIncome, // Tổng thu đã trừ nợ (theo điều kiện)
       expense: totalExpense
     };
   }, [transactions]);

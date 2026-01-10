@@ -9,36 +9,24 @@ interface DebtTrackerProps {
   transactions: Transaction[];
 }
 
-const DebtTracker: React.FC<DebtTrackerProps> = ({ members, transactions }) => {
+const DebtTracker: React.FC<DebtTrackerProps> = ({ members }) => {
   const currentMonth = new Date().toISOString().substring(0, 7);
 
   const debts = useMemo(() => {
     return members.map(member => {
       const unpaidMonths = MONTHS.filter(m => m <= currentMonth && !member.contributions.includes(m));
 
-      console.log('transactions', transactions);
-      console.log('member', member);
-
-      const unpaidTransaction = transactions.find(t => 
-        t.type === TransactionType.DEBT && 
-        String(t.user_id) === String(member.id)
-      );
-
-      console.log('unpaidTransaction', unpaidTransaction);
-
-      const unpaidAmount = unpaidTransaction?.amount || 0;
-      const unpaidDescription = unpaidTransaction?.description || '';
-
-      const totalDebt = unpaidAmount + unpaidMonths.length * MONTHLY_FEE;
+      const totalDebt = -member.debt_amount;
+      const debtDescription = member.debt_description;
 
       return {
         ...member,
         unpaidMonths,
         totalDebt,
-        unpaidDescription
+        debtDescription
       };
     }).filter(d => d.totalDebt > 0).sort((a, b) => b.totalDebt - a.totalDebt);
-  }, [members, transactions, currentMonth]);
+  }, [members, currentMonth]);
 
   console.log(debts);
 
@@ -65,7 +53,7 @@ const DebtTracker: React.FC<DebtTrackerProps> = ({ members, transactions }) => {
               <img src={debtor.avatar} alt={debtor.name} className="w-12 h-12 rounded-full border-2 border-white shadow-sm" />
               <div>
                 <h4 className="font-bold text-slate-800">{debtor.name}</h4>
-                <p className="text-xs text-slate-500">Thiếu: Quỹ tháng {debtor.unpaidMonths.map(m => m.split('-')[1]).join(', ')} và tiền {debtor.unpaidDescription}</p>
+                <p className="text-xs text-slate-500">Thiếu: Quỹ tháng {debtor.unpaidMonths.map(m => m.split('-')[1]).join(', ')} và tiền {debtor.debtDescription}</p>
               </div>
             </div>
             <div className="text-right">
