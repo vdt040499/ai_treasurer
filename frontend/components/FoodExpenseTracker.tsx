@@ -115,7 +115,7 @@ const FoodExpenseTracker: React.FC<FoodExpenseTrackerProps> = ({ transactions, i
               ) : filteredExpenses.map(item => (
                 <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="px-6 py-4 font-medium text-slate-700">{item.description}</td>
-                  <td className="px-6 py-4 text-slate-500 whitespace-nowrap">{new Date(item.created_at).toLocaleDateString('vi-VN')}</td>
+                  <td className="px-6 py-4 text-slate-500 whitespace-nowrap">{new Date(item.transaction_date).toLocaleDateString('vi-VN')}</td>
                   <td className="px-6 py-4 text-right font-bold text-orange-500">{formatCurrency(item.amount)}</td>
                 </tr>
               ))}
