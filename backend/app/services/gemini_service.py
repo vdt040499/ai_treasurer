@@ -4,6 +4,7 @@ import json
 import time
 import tempfile
 from pathlib import Path
+from datetime import datetime
 from google import genai
 from app.models.transaction_model import TransactionCreate
 from app.models.transaction_entry_model import TransactionEntryCreate
@@ -127,12 +128,36 @@ class GeminiService:
         debt = self.debt_service.get_unpaid_debt(user_id)
         print('debt', debt)
 
+        # Get latest FUND transaction entry for this user to determine next period_month
+        latest_fund_entry_query = self.transaction_entry_service.client.table("transaction_entries").select("period_month").eq("user_id", user_id).eq("type", "FUND").order("created_at", desc=True).limit(1)
+        latest_fund_entry_response = latest_fund_entry_query.execute()
+        
+        if latest_fund_entry_response.data and len(latest_fund_entry_response.data) > 0:
+            latest_period_month = latest_fund_entry_response.data[0].get("period_month")
+            if latest_period_month:
+                # Calculate next month from latest period_month (e.g., "2026-01" -> "2026-02", "2026-12" -> "2027-01")
+                year, month = latest_period_month.split("-")
+                year_int, month_int = int(year), int(month)
+                if month_int == 12:
+                    next_year = year_int + 1
+                    next_month = 1
+                else:
+                    next_year = year_int
+                    next_month = month_int + 1
+                next_period_month = f"{next_year}-{next_month:02d}"
+            else:
+                # If no period_month, use transaction_date
+                next_period_month = extracted_data.get("transaction_date")[:7]
+        else:
+            # If no previous FUND entry, use transaction_date
+            next_period_month = extracted_data.get("transaction_date")[:7]
+
         transaction_entry_fund_data = TransactionEntryCreate(
             transaction_id=transaction.get("id"),
             user_id=user_id,
             amount=MONTHLY_FEE,
             type="FUND",
-            period_month=extracted_data.get("transaction_date")[:7]
+            period_month=next_period_month
         )
         transaction_entry_fund_data = self.transaction_entry_service.create_transaction_entry(transaction_entry_fund_data)
         print('transaction_entry_fund_data', transaction_entry_fund_data)
@@ -144,7 +169,7 @@ class GeminiService:
                 user_id=user_id,
                 amount=debt_amount,
                 type="DEBT",
-                period_month=extracted_data.get("transaction_date")[:7]
+                period_month=next_period_month
             )
             print('transaction_entry_debt_data', transaction_entry_debt_data)
             transaction_entry_debt_data = self.transaction_entry_service.create_transaction_entry(transaction_entry_debt_data)
