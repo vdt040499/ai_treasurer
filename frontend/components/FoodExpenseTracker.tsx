@@ -130,7 +130,7 @@ const FoodExpenseTracker: React.FC<FoodExpenseTrackerProps> = ({ transactions, i
             {filteredExpenses.length > 0 && (
               <tfoot className="bg-slate-50/50">
                 <tr>
-                  <td className="px-6 py-4 font-bold text-slate-800">Tổng chi tiêu tháng {selectedMonth.split('-')[1]}</td>
+                  <td className="px-6 py-4 font-bold text-slate-800">Tổng chi tiêu tháng {selectedMonth.split('-')[1].slice(1, 2)}</td>
                   <td className="px-6 py-4 text-slate-500 whitespace-nowrap"></td>
                   <td className="px-6 py-4 text-right font-black text-slate-900 text-lg">
                     {formatCurrency(transactions.reduce((sum, i) => sum + i.amount, 0))}

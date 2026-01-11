@@ -88,12 +88,15 @@ class GeminiService:
             Created transaction with extracted data
         """
         extracted_data = await self._extract_transaction_from_image(file, "INCOME")
+        print('extracted_data', extracted_data)
+        print('extracted_data.get("amount")', extracted_data.get("amount"))
+        print('MONTHLY_FEE', MONTHLY_FEE)
 
         if not extracted_data.get("user_from") or not extracted_data.get("id_from") or not extracted_data.get("amount"):
             raise HTTPException(status_code=400, detail="Không tìm thấy thông tin giao dịch hoặc số tiền chuyển khoản. Vui lòng thử lại")
 
-        if extracted_data.get("amount") <= MONTHLY_FEE:
-            raise HTTPException(status_code=400, detail="Số tiền chuyển khoản phải lớn hơn {MONTHLY_FEE}")
+        if extracted_data.get("amount") < MONTHLY_FEE:
+            raise HTTPException(status_code=400, detail=f"Số tiền chuyển khoản phải lớn hơn {MONTHLY_FEE}")
         
         user_id = extracted_data.get("id_from")
         if isinstance(user_id, str) and user_id.isdigit():
@@ -126,7 +129,6 @@ class GeminiService:
             raise HTTPException(status_code=500, detail="Failed to create transaction")
 
         debt = self.debt_service.get_unpaid_debt(user_id)
-        print('debt', debt)
 
         # Get latest FUND transaction entry for this user to determine next period_month
         latest_fund_entry_query = self.transaction_entry_service.client.table("transaction_entries").select("period_month").eq("user_id", user_id).eq("type", "FUND").order("created_at", desc=True).limit(1)
@@ -160,7 +162,6 @@ class GeminiService:
             period_month=next_period_month
         )
         transaction_entry_fund_data = self.transaction_entry_service.create_transaction_entry(transaction_entry_fund_data)
-        print('transaction_entry_fund_data', transaction_entry_fund_data)
 
         if debt and debt_amount > 0 and debt_amount >= debt.get("amount"):
             transaction_entry_debt_data = TransactionEntryCreate(
@@ -270,6 +271,7 @@ class GeminiService:
             #     "description": "Pham Dinh Hung chuyen"
             # }
         except Exception as e:
+            print('error', e)
             raise HTTPException(status_code=500, detail=str(e))
         finally:
             if temp_file_path and os.path.exists(temp_file_path):

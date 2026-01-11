@@ -14,7 +14,6 @@ import { getCurrentMonth, getCurrentYear } from './utils/time';
 
 const App: React.FC = () => {
   const [members, setMembers] = useState<Member[]>([]);
-  const [dashboardTransactions, setDashboardTransactions] = useState<Transaction[]>([]);
   const [incomeTransactions, setIncomeTransactions] = useState<Transaction[]>([]);
   const [expenseTransactions, setExpenseTransactions] = useState<Transaction[]>([]);
   const [debtTransactions, setDebtTransactions] = useState<Transaction[]>([]);
@@ -90,9 +89,6 @@ const App: React.FC = () => {
           }
           return debtTransactions;
         });
-        
-        // Dashboard cần cả INCOME, DEBT, và EXPENSE để tính chính xác
-        setDashboardTransactions([...incomeTransactions, ...expenseTransactions, ...debtTransactions]);
       } catch (error) {
         console.error('Failed to fetch transactions:', error);
       } finally {
@@ -149,7 +145,7 @@ const App: React.FC = () => {
                 <h1 className="text-4xl font-black tracking-tight leading-none bg-gradient-to-r from-blue-600 via-blue-500 to-orange-500 bg-clip-text text-transparent drop-shadow-sm">
                   APPFUND
                 </h1>
-                <p className="text-slate-500 font-bold text-xs uppercase tracking-tighter mt-1">Application Fund Control</p>
+                <p className="text-slate-500 font-bold text-xs uppercase tracking-tighter mt-1">Application Fund Tracker</p>
               </div>
             </div>
           </div>
@@ -178,15 +174,15 @@ const App: React.FC = () => {
             />
           </div>
           <div className="flex flex-col gap-6">
-             <DebtTracker members={members} />
+             <DebtTracker members={members} isLoading={isLoadingMembers} />
              <div className="p-6 rounded-3xl bg-gradient-to-br from-blue-600 to-orange-500 text-white shadow-xl">
-                <h3 className="text-xl font-bold mb-2">Mẹo tiết kiệm 💡</h3>
+                <h3 className="text-xl font-bold mb-2">Hôm nay ăn gì ? 🍽️</h3>
                 <p className="text-white/80 text-sm leading-relaxed mb-4">
-                  Sử dụng Gemini AI để tự động đọc bill giúp team bạn giảm thiểu sai sót lên đến 99% so với nhập tay.
+                  Chức năng gợi ý món ăn đang được phát triển và sẽ sớm ra mắt. Cả nhà kiên nhẫn chờ đợi nhé!
                 </p>
-                <button className="w-full py-2 bg-white/20 hover:bg-white/30 rounded-xl font-bold transition-all text-sm">
-                  Xem báo cáo chi tiết
-                </button>
+                {/* <button className="w-full py-2 bg-white/20 hover:bg-white/30 rounded-xl font-bold transition-all text-sm">
+                  Trong thời gian chờ đợi chức năng hoàn hiện. Nhờ ... chọn món cho lần ăn sắp tới nhé.
+                </button> */}
              </div>
           </div>
         </div>

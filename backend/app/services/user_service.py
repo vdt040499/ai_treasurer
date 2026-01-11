@@ -36,7 +36,7 @@ class UserService(BaseService):
         Returns:
             List of users
         """
-        return self.get_all(order_by="id", desc=False)
+        return self.get_all(order_by="id", desc=False, filters={"active": True})
 
     def create_user(self, user: UserCreate) -> Optional[Dict[str, Any]]:
         """
@@ -72,6 +72,7 @@ class UserService(BaseService):
         query = query.ilike("period_month", f"{current_year}%")
         transaction_entries = query.execute()
 
+
         debt_service = self.client.table("debts")
         query = debt_service.select("*").eq("is_fully_paid", False)
         debt_entries = query.execute()
@@ -103,11 +104,19 @@ class UserService(BaseService):
             income_total = user_totals.get("total_income", 0)
             contributions = sorted(user_totals.get("paid_months", []))
             debt_entry = next((debt for debt in debt_entries.data if debt.get("user_id") == user_id), None)
+            debt_id = debt_entry.get('id', None) if debt_entry else None
+            
+            transaction_entry_service = self.client.table("transaction_entries")
+            paid_debt_query = transaction_entry_service.select("*").eq("user_id", user_id).eq("type", "DEBT_PAYMENT")
+            paid_debt_query = paid_debt_query.ilike("period_month", f"{current_year}%")
+            paid_debt_entries = paid_debt_query.execute()
+            paid_debt_total = sum(entry.get('amount', 0) for entry in paid_debt_entries.data)
+            
             debt_total = debt_entry.get('amount', 0) if debt_entry else 0
             debt_description = debt_entry.get('description', '') if debt_entry else ''
 
             current_month = datetime.now().month
-            debt_amount = income_total - current_month * MONTHLY_FEE - debt_total
+            debt_amount = income_total - current_month * MONTHLY_FEE - debt_total + paid_debt_total
 
             # Admin debt is 0
             if (user_id == 9 or debt_amount > 0):

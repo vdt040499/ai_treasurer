@@ -2,14 +2,15 @@
 import React, { useMemo } from 'react';
 import { Member, Transaction } from '../types';
 import { MONTHS, MONTHLY_FEE } from '../constants';
-import { TransactionType } from '../types';
+import { getCurrentMonth } from '../utils/time';
 
 interface DebtTrackerProps {
   members: Member[];
   transactions: Transaction[];
+  isLoading?: boolean;
 }
 
-const DebtTracker: React.FC<DebtTrackerProps> = ({ members }) => {
+const DebtTracker: React.FC<DebtTrackerProps> = ({ members, isLoading = false }) => {
   const currentMonth = new Date().toISOString().substring(0, 7);
 
   const debts = useMemo(() => {
@@ -43,30 +44,42 @@ const DebtTracker: React.FC<DebtTrackerProps> = ({ members }) => {
         </div>
         <div>
           <h3 className="font-bold text-slate-800 text-lg">Danh sách "Nợ" quỹ</h3>
-          <p className="text-sm text-slate-500 font-medium">Thành viên chưa hoàn thành đóng góp</p>
+          <p className="text-sm text-slate-500 font-medium">Thành viên chưa đóng quỹ tháng {getCurrentMonth()}</p>
         </div>
       </div>
-      <div className="divide-y divide-slate-100">
-        {debts.length > 0 ? debts.map(debtor => (
-          <div key={debtor.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
-            <div className="flex items-center gap-4">
-              <img src={debtor.avatar} alt={debtor.name} className="w-12 h-12 rounded-full border-2 border-white shadow-sm" />
-              <div>
-                <h4 className="font-bold text-slate-800">{debtor.name}</h4>
-                <p className="text-xs text-slate-500">Thiếu: Quỹ tháng {debtor.unpaidMonths.map(m => m.split('-')[1]).join(', ')} và tiền {debtor.debtDescription}</p>
+      {isLoading ? (
+        <div className="p-12 flex flex-col items-center justify-center">
+          <div className="relative">
+            <div className="w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin"></div>
+          </div>
+          <p className="mt-4 text-slate-600 text-sm font-medium">Đang tải dữ liệu...</p>
+        </div>
+      ) : (
+        <div className="divide-y divide-slate-100">
+          {debts.length > 0 ? debts.map(debtor => (
+            <div key={debtor.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+              <div className="flex items-center gap-4">
+                <img src={debtor.avatar} alt={debtor.name} className="w-12 h-12 rounded-full border-2 border-white shadow-sm" />
+                <div>
+                  <h4 className="font-bold text-slate-800">{debtor.name}</h4>
+                  <p className="text-xs text-slate-500">
+                    Thiếu Quỹ tháng {debtor.unpaidMonths.map(m => m.split('-')[1]).join(', ')}
+                    {debtor.debtDescription && ` và tiền ${debtor.debtDescription}`}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-orange-600 font-black text-lg">{formatCurrency(debtor.totalDebt)}</div>
+                {/* <span className="inline-block px-2 py-0.5 bg-orange-100 text-orange-600 text-[10px] font-bold rounded uppercase">Cần nhắc nhở</span> */}
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-orange-600 font-black text-lg">{formatCurrency(debtor.totalDebt)}</div>
-              {/* <span className="inline-block px-2 py-0.5 bg-orange-100 text-orange-600 text-[10px] font-bold rounded uppercase">Cần nhắc nhở</span> */}
+          )) : (
+            <div className="p-10 text-center text-slate-400 font-medium">
+               🎉 Tuyệt vời! Tất cả thành viên đã đóng quỹ đầy đủ.
             </div>
-          </div>
-        )) : (
-          <div className="p-10 text-center text-slate-400 font-medium">
-             🎉 Tuyệt vời! Tất cả thành viên đã đóng quỹ đầy đủ.
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -9,9 +9,41 @@ interface ChatBotProps {
 }
 
 const ChatBot: React.FC<ChatBotProps> = () => {
-  const [messages, setMessages] = useState<{role: 'user' | 'ai', text: string, image?: string}[]>([
-    { role: 'ai', text: 'Xin chào! Tôi là trợ lý quản lý quỹ. Bạn có thể gửi ảnh biên lai hoặc màn hình chuyển khoản để tôi tự động cập nhật nhé!' }
+  const [messages, setMessages] = useState<{role: 'user' | 'ai', text: string, image?: string, isSample?: boolean}[]>([
+    { 
+      role: 'ai', 
+      text: 'Xin chào! Tôi là APPFUND Assistant - trợ lý quản lý quỹ. Bạn có thể gửi ảnh màn hình chuyển khoản và hoá đơn để tôi tự động cập nhật dữ liệu nhé!' 
+    },
+    {
+      role: 'user',
+      text: '',
+      image: 'https://res.cloudinary.com/dqxrwqict/image/upload/v1768122283/IMG_5442_vjugcp.png',
+      isSample: true
+    },
+    {
+      role: 'ai',
+      text: '✅ Đã xong! Tôi đã ghi nhận: Võ Duy Tân. Số tiền: 200.000 VNĐ.'
+    },
+    {
+      role: 'user',
+      text: '',
+      image: 'https://res.cloudinary.com/dqxrwqict/image/upload/v1768124121/IMG_5443_q84kph.jpg',
+      isSample: true
+    },
+    {
+      role: 'ai',
+      text: '📄 Hóa đơn 1: Chè Bưởi Vĩnh Long - Tô Hiến Thành\n💰 Số tiền: 272.150 VNĐ'
+    },
+    {
+      role: 'ai',
+      text: '📄 Hóa đơn 2: Cá Viên Chiên Nước Mắm & Kem Kẹp Singapore\n💰 Số tiền: 207.800 VNĐ'
+    },
+    {
+      role: 'ai',
+      text: '✅ Đã xong! Tôi đã ghi nhận: 2 hóa đơn. Tổng tiền: 479.950 VNĐ.'
+    }
   ]);
+  const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
   const [inputText, setInputText] = useState('');
   const [stagedFile, setStagedFile] = useState<{data: string, type: string} | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -168,8 +200,7 @@ const ChatBot: React.FC<ChatBotProps> = () => {
         ]);
       }
     } catch (err) {
-      console.error(err);
-      setMessages(prev => [...prev, { role: 'ai', text: '❌ Lỗi rồi! Tôi không đọc được ảnh này, bạn kiểm tra lại hoặc nhập tay nhé.' }]);
+      setMessages(prev => [...prev, { role: 'ai', text: `❌ ${err.message}` }]);
     } finally {
       setIsProcessing(false);
     }
@@ -210,8 +241,8 @@ const ChatBot: React.FC<ChatBotProps> = () => {
             <img src="https://res.cloudinary.com/dqxrwqict/image/upload/v1767975904/Gemini_Generated_Image_duz4cduz4cduz4cd_ga2zve.png" alt="profile" className="w-full h-10 rounded-full object-cover object-center" />
           </div>
           <div>
-            <h3 className="font-bold">AppFund Assistant</h3>
-            <p className="text-[10px] text-white/70 tracking-widest font-black">Assistant of Võ Tân</p>
+            <h3 className="font-bold">APPFUND Assistant</h3>
+            <p className="text-[10px] text-white/70 tracking-widest font-black">Application Fund Tracker</p>
           </div>
         </div>
         {/* <button 
@@ -235,11 +266,24 @@ const ChatBot: React.FC<ChatBotProps> = () => {
                 : 'bg-white text-slate-700 rounded-tl-none border border-slate-100'
             }`}>
               {m.image && (
-                <img src={m.image} alt="uploaded" className="mb-2 rounded-lg max-h-48 w-full object-cover border border-white/20" />
+                <div className="mb-2">
+                  {m.isSample ? (
+                    <img 
+                      src={m.image} 
+                      alt="sample" 
+                      className="rounded-lg max-h-32 w-auto object-contain border border-white/20 cursor-pointer hover:opacity-80 transition-opacity shadow-sm" 
+                      onClick={() => setEnlargedImage(m.image!)}
+                    />
+                  ) : (
+                    <img src={m.image} alt="uploaded" className="rounded-lg max-h-48 w-full object-cover border border-white/20" />
+                  )}
+                </div>
               )}
-              <div className="prose prose-sm max-w-none prose-slate">
-                {m.text.split('\n').map((line, idx) => <p key={idx}>{line}</p>)}
-              </div>
+              {m.text && (
+                <div className={`prose prose-sm max-w-none ${m.role === 'user' ? 'prose-invert' : 'prose-slate'}`}>
+                  {m.text.split('\n').map((line, idx) => <p key={idx}>{line}</p>)}
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -251,11 +295,36 @@ const ChatBot: React.FC<ChatBotProps> = () => {
                 <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                 <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
               </div>
-              <span className="text-xs text-slate-500 font-bold italic">Gemini đang suy nghĩ...</span>
+              <span className="text-xs text-slate-500 font-bold italic">AppFund đang xử lý...</span>
             </div>
           </div>
         )}
       </div>
+
+      {/* Enlarged Image Modal */}
+      {enlargedImage && (
+        <div 
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+          onClick={() => setEnlargedImage(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] w-full">
+            <button
+              onClick={() => setEnlargedImage(null)}
+              className="absolute -top-10 right-0 text-white hover:text-gray-300 transition-colors"
+            >
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <img 
+              src={enlargedImage} 
+              alt="enlarged" 
+              className="w-full h-full object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
 
       {stagedFile && (
         <div className="p-3 bg-blue-50 border-t border-blue-100 flex items-center gap-3 animate-slide-up">
