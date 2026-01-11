@@ -9,6 +9,7 @@ import DebtTracker from './components/DebtTracker';
 import { Transaction, Member, TransactionType } from './types';
 import { getUsersWithContributions } from './services/userService';
 import { getTransactions } from './services/transactionService';
+import { getDebts } from './services/debtService';
 import { getCurrentMonth, getCurrentYear } from './utils/time';
 
 const App: React.FC = () => {
@@ -45,10 +46,22 @@ const App: React.FC = () => {
           setIsLoadingTransactions(true);
         }
         const transactions = await getTransactions();
+        const debts = await getDebts(true); // Get fully paid debts (is_fully_paid = true)
 
         const incomeTransactions = transactions.filter(t => t.type === TransactionType.INCOME);
         const expenseTransactions = transactions.filter(t => t.type === TransactionType.EXPENSE);
-        const debtTransactions = transactions.filter(t => t.type === TransactionType.DEBT);
+        
+        // Map debts to transactions format
+        const debtTransactions: Transaction[] = debts.map((debt: any) => ({
+          id: String(debt.id || ''),
+          type: TransactionType.DEBT,
+          amount: debt.amount || 0,
+          date: debt.created_at || '',
+          description: debt.description || '',
+          category: '',
+          user: debt.user || null,
+          created_at: debt.created_at || ''
+        }));
 
         // Chỉ update state nếu data thay đổi để tránh re-render không cần thiết
         setIncomeTransactions(prev => {
@@ -70,9 +83,9 @@ const App: React.FC = () => {
         });
         
         setDebtTransactions(prev => {
-          const prevIds = new Set(prev.map(t => t.id));
-          const newIds = new Set(debtTransactions.map(t => t.id));
-          if (prevIds.size === newIds.size && [...prevIds].every(id => newIds.has(id))) {
+          const prevIds = new Set<string>(prev.map(t => t.id));
+          const newIds = new Set<string>(debtTransactions.map(t => t.id));
+          if (prevIds.size === newIds.size && [...prevIds].every((id: string) => newIds.has(id))) {
             return prev;
           }
           return debtTransactions;
@@ -149,7 +162,7 @@ const App: React.FC = () => {
           </div>
         </header>
 
-        <Dashboard transactions={dashboardTransactions} />
+        <Dashboard />
         
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           <div className="xl:col-span-2 flex flex-col gap-6">

@@ -12,6 +12,7 @@ settings.validate()
 from app.routers.ai_router import router as ai_router
 from app.routers.transaction_router import router as transaction_router
 from app.routers.user_router import router as user_router
+from app.routers.debt_router import router as debt_router
 
 # @asynccontextmanager
 # async def lifespan(app: FastAPI):
@@ -48,6 +49,7 @@ app.add_middleware(
 app.include_router(ai_router, prefix="/api", tags=["AI"])
 app.include_router(transaction_router, prefix="/api/transactions", tags=["Transactions"])
 app.include_router(user_router, prefix="/api/users", tags=["Users"])
+app.include_router(debt_router, prefix="/api/debts", tags=["Debts"])
 
 if __name__ == "__main__":
     import uvicorn

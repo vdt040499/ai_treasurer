@@ -171,3 +171,29 @@ class TransactionService(BaseService):
 
         query = query.execute()
         return query.data
+
+    def get_dashboard_stats(self) -> Dict[str, Any]:
+        """
+        Get dashboard statistics.
+        
+        Returns:
+            Dict with total_income, total_expense, and balance
+        """
+        # Tổng thu: tổng transaction_entries có type = FUND
+        transaction_entries_query = self.client.table("transaction_entries").select("amount").eq("type", "FUND")
+        transaction_entries_response = transaction_entries_query.execute()
+        total_income = sum(item.get("amount", 0) for item in transaction_entries_response.data)
+        
+        # Tổng chi: tổng transactions có type = EXPENSE
+        expense_query = self.client.table(self.table_name).select("amount").eq("type", "EXPENSE").gt("amount", 0)
+        expense_response = expense_query.execute()
+        total_expense = sum(item.get("amount", 0) for item in expense_response.data)
+        
+        # Dư quỹ: Tổng thu - Tổng chi
+        balance = total_income - total_expense
+        
+        return {
+            "total_income": total_income,
+            "total_expense": total_expense,
+            "balance": balance
+        }

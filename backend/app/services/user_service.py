@@ -64,40 +64,31 @@ class UserService(BaseService):
         # Get all users
         users = self.get_users()
 
-        # Get all INCOME transactions grouped by user_id
-        transaction_service = self.client.table("transactions")
-        query = transaction_service.select("user_id, transaction_date, amount, type", "description").in_("type", ["INCOME", "DEBT"])
-        
-        # Filter by year if provided
-        if year is not None:
-            start_date = f"{year}-01-01"
-            end_date = f"{year}-12-31"
-            query = query.gte("transaction_date", start_date).lte("transaction_date", end_date)
-        
-        income_transactions = query.execute()
-        
+        current_year = datetime.now().year
+
+        # Get all transaction entries grouped by user_id
+        transaction_entry_service = self.client.table("transaction_entries")
+        query = transaction_entry_service.select("*").eq("type", "FUND")
+        query = query.ilike("period_month", f"{current_year}%")
+        transaction_entries = query.execute()
+
+        debt_service = self.client.table("debts")
+        query = debt_service.select("*").eq("is_fully_paid", False)
+        debt_entries = query.execute()
+    
         # Group transactions by user_id
         total_user_amount: Dict[int, Dict[str, int]] = {}
-        for tx in income_transactions.data:
+        for tx in transaction_entries.data:
             user_id = tx.get('user_id')
-            if user_id is None:
-                continue  # Skip transactions without user_id
-                
             if user_id not in total_user_amount:
                 total_user_amount[user_id] = {
-                    "INCOME": 0,
-                    "DEBT": 0
+                    "total_income": 0,
+                    "paid_months": [],
                 }
 
-            tx_type = tx.get('type')
             amount = tx.get('amount', 0)
-            
-            if tx_type == "INCOME":
-                total_user_amount[user_id]["INCOME"] += amount
-            elif tx_type == "DEBT":
-                description = tx.get('description', '')
-                total_user_amount[user_id]["DEBT"] += amount
-                total_user_amount[user_id]["DEBT_DESCRIPTION"] = description
+            total_user_amount[user_id]["total_income"] += amount
+            total_user_amount[user_id]["paid_months"].append(tx.get('period_month'))
         
         result = []
         for user in users:
@@ -108,16 +99,14 @@ class UserService(BaseService):
             joined_date = created_at[:7] if created_at else ''
             
             # Get user's transaction totals, default to 0 if no transactions
-            user_totals = total_user_amount.get(user_id, {"INCOME": 0, "DEBT": 0})
-            income_total = user_totals.get("INCOME", 0)
-            debt_total = user_totals.get("DEBT", 0)
-            debt_description = user_totals.get("DEBT_DESCRIPTION", '')
-            
-            # Use current year if year is None
-            target_year = year if year is not None else datetime.now().year
+            user_totals = total_user_amount.get(user_id, {"total_income": 0, "paid_months": []})
+            income_total = user_totals.get("total_income", 0)
+            contributions = sorted(user_totals.get("paid_months", []))
+            debt_entry = next((debt for debt in debt_entries.data if debt.get("user_id") == user_id), None)
+            debt_total = debt_entry.get('amount', 0) if debt_entry else 0
+            debt_description = debt_entry.get('description', '') if debt_entry else ''
+
             current_month = datetime.now().month
-            number_of_paid_months = math.floor(income_total / MONTHLY_FEE) if MONTHLY_FEE > 0 else 0
-            contributions = [f"{target_year}-{month:02d}" for month in range(1, 13) if month <= number_of_paid_months]
             debt_amount = income_total - current_month * MONTHLY_FEE - debt_total
 
             # Admin debt is 0

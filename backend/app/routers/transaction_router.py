@@ -1,6 +1,7 @@
 """Transaction router endpoints."""
 from typing import List, Dict, Any
 from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel
 from app.models import Transaction, TransactionCreate, TransactionFilters
 from app.services import TransactionService
 
@@ -86,3 +87,21 @@ async def get_all_incomes(
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch incomes: {str(e)}")
+
+@router.get("/dashboard-stats", response_model=Dict[str, Any])
+async def get_dashboard_stats(
+    service: TransactionService = Depends(get_transaction_service)
+):
+    """
+    Get dashboard statistics.
+    
+    Args:
+        service: TransactionService instance
+        
+    Returns:
+        Dict with total_income, total_expense, and balance
+    """
+    try:
+        return service.get_dashboard_stats()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch dashboard stats: {str(e)}")

@@ -18,3 +18,8 @@ export const getTransactions = async () => {
 
   return response.data;
 };
+
+export const getDashboardStats = async () => {
+  const response = await axios.get(`${API_URL}/api/transactions/dashboard-stats`);
+  return response.data;
+};

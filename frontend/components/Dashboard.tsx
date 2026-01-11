@@ -1,84 +1,64 @@
 
-import React, { useMemo } from 'react';
-import { Transaction, TransactionType } from '../types';
-import { MONTHLY_FEE } from '../constants';
+import React, { useEffect, useState } from 'react';
+import { getDashboardStats } from '../services/transactionService';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
-interface DashboardProps {
-  transactions: Transaction[];
+interface DashboardStats {
+  total_income: number;
+  total_expense: number;
+  balance: number;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
-  const stats = useMemo(() => {
-    // Tính số tháng hiện tại (từ đầu năm đến tháng hiện tại)
-    const currentDate = new Date();
-    const currentMonth = currentDate.getMonth() + 1; // 1-12
-    const monthCount = currentMonth;
+const Dashboard: React.FC = () => {
+  const [stats, setStats] = useState<DashboardStats>({
+    total_income: 0,
+    total_expense: 0,
+    balance: 0
+  });
+  const [isLoading, setIsLoading] = useState(true);
 
-    // Group transactions theo user_id
-    const userTransactions: { [userId: string]: { income: number; debt: number } } = {};
-    let incomeWithoutUser = 0; // Income không có user_id (cộng trực tiếp)
-    
-    transactions.forEach(t => {
-      const userId = (t as any).user_id || t.user?.id;
-      
-      if (t.type === TransactionType.INCOME) {
-        if (userId) {
-          if (!userTransactions[userId]) {
-            userTransactions[userId] = { income: 0, debt: 0 };
-          }
-          userTransactions[userId].income += t.amount;
-        } else {
-          // Income không có user_id thì cộng trực tiếp
-          incomeWithoutUser += t.amount;
-        }
-      } else if (t.type === TransactionType.DEBT) {
-        if (userId) {
-          if (!userTransactions[userId]) {
-            userTransactions[userId] = { income: 0, debt: 0 };
-          }
-          userTransactions[userId].debt += t.amount;
-        }
-        // Debt không có user_id thì bỏ qua (không xử lý)
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getDashboardStats();
+        setStats(data);
+      } catch (error) {
+        console.error('Failed to fetch dashboard stats:', error);
+      } finally {
+        setIsLoading(false);
       }
-    });
-
-    // Tính tổng thu theo từng thành viên
-    let totalNetIncome = incomeWithoutUser; // Bắt đầu với income không có user
-
-    Object.entries(userTransactions).forEach(([userId, userData]) => {
-      const { income, debt } = userData;
-      const requiredAmount = monthCount * MONTHLY_FEE + debt;
-      
-      // Nếu income > (số tháng * MONTHLY_FEE + debt) thì mới trừ debt
-      if (income > requiredAmount) {
-        totalNetIncome += income - debt;
-      } else {
-        // Không trừ debt
-        totalNetIncome += income;
-      }
-    });
-
-    const totalExpense = transactions
-      .filter(t => t.type === TransactionType.EXPENSE)
-      .reduce((sum, t) => sum + t.amount, 0);
-    
-    return {
-      balance: totalNetIncome - totalExpense,
-      income: totalNetIncome, // Tổng thu đã trừ nợ (theo điều kiện)
-      expense: totalExpense
     };
-  }, [transactions]);
 
-  const chartData = useMemo(() => {
-    return [
-      { name: 'Thu nhập', value: stats.income, color: '#2563eb' },
-      { name: 'Chi tiêu', value: stats.expense, color: '#f97316' }
-    ];
-  }, [stats]);
+    fetchStats();
+    
+    // Refresh every 60 seconds
+    const intervalId = setInterval(fetchStats, 60000);
+    return () => clearInterval(intervalId);
+  }, []);
+
+  const chartData = [
+    { name: 'Thu nhập', value: stats.total_income, color: '#2563eb' },
+    { name: 'Chi tiêu', value: stats.total_expense, color: '#f97316' }
+  ];
 
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm animate-pulse">
+              <div className="h-4 bg-slate-200 rounded w-24 mb-2"></div>
+              <div className="h-8 bg-slate-200 rounded w-32"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -89,11 +69,11 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
         </div>
         <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
           <p className="text-slate-500 text-sm font-medium">Tổng thu</p>
-          <h3 className="text-3xl font-bold mt-1 text-blue-600">{formatCurrency(stats.income)}</h3>
+          <h3 className="text-3xl font-bold mt-1 text-blue-600">{formatCurrency(stats.total_income)}</h3>
         </div>
         <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
           <p className="text-slate-500 text-sm font-medium">Tổng chi</p>
-          <h3 className="text-3xl font-bold mt-1 text-orange-600">{formatCurrency(stats.expense)}</h3>
+          <h3 className="text-3xl font-bold mt-1 text-orange-600">{formatCurrency(stats.total_expense)}</h3>
         </div>
       </div>
 
