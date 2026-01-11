@@ -6,8 +6,6 @@ class TransactionBase(BaseModel):
     description: Optional[str] = None
     amount: Optional[int] = None
     user_id: Optional[int] = None
-    status: str
-    err_message: Optional[str] = None
     transaction_date: Optional[str] = None
 
 class TransactionCreate(TransactionBase):

@@ -6,11 +6,16 @@ import tempfile
 from pathlib import Path
 from google import genai
 from app.models.transaction_model import TransactionCreate
+from app.models.transaction_entry_model import TransactionEntryCreate
+from app.models.debts_model import DebtCreate
 from fastapi import UploadFile, HTTPException
 from dotenv import load_dotenv
+from app.constants import MONTHLY_FEE
 
 from app.services.user_service import UserService
 from app.services.transaction_service import TransactionService
+from app.services.debt_service import DebtService
+from app.services.transaction_entry_service import TransactionEntryService
 # Lazy import QueueManager to avoid circular dependency
 
 env_path = Path(__file__).parent.parent.parent / '.env'
@@ -59,6 +64,8 @@ class GeminiService:
 
         self.user_service = UserService()
         self.transaction_service = TransactionService()
+        self.debt_service = DebtService()
+        self.transaction_entry_service = TransactionEntryService()
 
     def chat_with_ai(self, message: str):
         system_prompt = self._get_system_prompt()
@@ -80,8 +87,13 @@ class GeminiService:
             Created transaction with extracted data
         """
         extracted_data = await self._extract_transaction_from_image(file, "INCOME")
+
+        if not extracted_data.get("user_from") or not extracted_data.get("id_from") or not extracted_data.get("amount"):
+            raise HTTPException(status_code=400, detail="Không tìm thấy thông tin giao dịch hoặc số tiền chuyển khoản. Vui lòng thử lại")
+
+        if extracted_data.get("amount") <= MONTHLY_FEE:
+            raise HTTPException(status_code=400, detail="Số tiền chuyển khoản phải lớn hơn {MONTHLY_FEE}")
         
-        # Handle case where id_from might be string or missing
         user_id = extracted_data.get("id_from")
         if isinstance(user_id, str) and user_id.isdigit():
             user_id = int(user_id)
@@ -95,6 +107,8 @@ class GeminiService:
                     user_id = matching_user.get("id")
                 else:
                     user_id = None
+
+        debt_amount = extracted_data.get("amount") - MONTHLY_FEE
         
         transaction_data = TransactionCreate(
             type="INCOME",
@@ -104,11 +118,41 @@ class GeminiService:
             transaction_date=extracted_data.get("transaction_date"),
             status="COMPLETED"
         )
-        
+
         transaction = self.transaction_service.create_transaction(transaction_data)
-        
+
         if not transaction:
             raise HTTPException(status_code=500, detail="Failed to create transaction")
+
+        debt = self.debt_service.get_unpaid_debt(user_id)
+        print('debt', debt)
+
+        transaction_entry_fund_data = TransactionEntryCreate(
+            transaction_id=transaction.get("id"),
+            user_id=user_id,
+            amount=MONTHLY_FEE,
+            type="FUND",
+            period_month=extracted_data.get("transaction_date")[:7]
+        )
+        transaction_entry_fund_data = self.transaction_entry_service.create_transaction_entry(transaction_entry_fund_data)
+        print('transaction_entry_fund_data', transaction_entry_fund_data)
+
+        if debt and debt_amount > 0 and debt_amount >= debt.get("amount"):
+            transaction_entry_debt_data = TransactionEntryCreate(
+                transaction_id=transaction.get("id"),
+                debt_id=int(debt.get("id")),
+                user_id=user_id,
+                amount=debt_amount,
+                type="DEBT",
+                period_month=extracted_data.get("transaction_date")[:7]
+            )
+            print('transaction_entry_debt_data', transaction_entry_debt_data)
+            transaction_entry_debt_data = self.transaction_entry_service.create_transaction_entry(transaction_entry_debt_data)
+
+            # Update only is_full_paid field
+            debt_id = debt.get("id")
+            if debt_id:
+                self.debt_service.update(debt_id, {"is_fully_paid": True})
 
         result = dict(transaction)
         result["user_name"] = extracted_data.get("user_from")
@@ -192,13 +236,13 @@ class GeminiService:
 
             return json.loads(clean_res)
             # return {
-            #     "transaction_date": "2026-01-06",
-            #     "user_from": "Võ Duy Tân",
-            #     "id_from": 3,
+            #     "transaction_date": "2026-01-11",
+            #     "user_from": "Phạm ĐÌnh Hưng",
+            #     "id_from": 1,
             #     "user_to": "MOMO_TOMPAO",
             #     "type": "INCOME",
-            #     "amount": 200000,
-            #     "description": "Vo Tan dong quy thang 1"
+            #     "amount": 251000,
+            #     "description": "Pham Dinh Hung chuyen"
             # }
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))

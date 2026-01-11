@@ -29,7 +29,7 @@ class BaseService:
         """
         return response_data[0] if response_data else None
     
-    def get_all(self, order_by: Optional[str] = None, desc: bool = True) -> List[Dict[str, Any]]:
+    def get_all(self, order_by: Optional[str] = None, desc: bool = True, filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """
         Get all records from table.
         
@@ -41,6 +41,10 @@ class BaseService:
             List of records
         """
         query = self.client.table(self.table_name).select("*")
+
+        if filters:
+            for key, value in filters.items():
+                query = query.eq(key, value)
         
         if order_by:
             query = query.order(order_by, desc=desc)
