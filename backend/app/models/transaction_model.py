@@ -7,6 +7,8 @@ class TransactionBase(BaseModel):
     amount: Optional[int] = None
     user_id: Optional[int] = None
     transaction_date: Optional[str] = None
+    status: Optional[str] = None
+    order_code: Optional[int] = None
 
 class TransactionCreate(TransactionBase):
     pass
@@ -20,6 +22,7 @@ class TransactionFilters(BaseModel):
     start_date: Optional[str] = None
     end_date: Optional[str] = None
     description: Optional[str] = None
+    order_code: Optional[int] = None
 
 class UserInfo(BaseModel):
     """User information embedded in transaction."""

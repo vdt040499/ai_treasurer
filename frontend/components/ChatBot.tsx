@@ -17,16 +17,6 @@ const ChatBot: React.FC<ChatBotProps> = () => {
     {
       role: 'user',
       text: '',
-      image: 'https://res.cloudinary.com/dqxrwqict/image/upload/v1768122283/IMG_5442_vjugcp.png',
-      isSample: true
-    },
-    {
-      role: 'ai',
-      text: '✅ Đã xong! Tôi đã ghi nhận: Võ Duy Tân. Số tiền: 200.000 VNĐ.'
-    },
-    {
-      role: 'user',
-      text: '',
       image: 'https://res.cloudinary.com/dqxrwqict/image/upload/v1768124121/IMG_5443_q84kph.jpg',
       isSample: true
     },
@@ -335,13 +325,13 @@ const ChatBot: React.FC<ChatBotProps> = () => {
              </button>
            </div>
            <div className="flex-1 grid grid-cols-2 gap-2">
-             <button 
+             {/* <button 
               onClick={() => processImage('INCOME')}
               className="py-2 px-3 bg-blue-600 text-white rounded-xl text-xs font-bold shadow-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-1"
              >
                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                Đóng Quỹ
-             </button>
+             </button> */}
              <button 
               onClick={() => processImage('EXPENSE')}
               className="py-2 px-3 bg-orange-600 text-white rounded-xl text-xs font-bold shadow-lg hover:bg-orange-700 transition-all flex items-center justify-center gap-1"

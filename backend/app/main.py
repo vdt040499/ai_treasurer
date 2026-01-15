@@ -1,8 +1,16 @@
 """Main application entry point."""
 from contextlib import asynccontextmanager
 import asyncio
-from fastapi import FastAPI
+import logging
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 
 # Import config first to validate settings
 from app.core.config import settings
@@ -13,6 +21,7 @@ from app.routers.ai_router import router as ai_router
 from app.routers.transaction_router import router as transaction_router
 from app.routers.user_router import router as user_router
 from app.routers.debt_router import router as debt_router
+from app.routers.payment_router import router as payment_router
 
 # @asynccontextmanager
 # async def lifespan(app: FastAPI):
@@ -46,10 +55,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Add middleware to log all requests
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logger = logging.getLogger(__name__)
+    logger.info(f"Request: {request.method} {request.url.path}")
+    response = await call_next(request)
+    logger.info(f"Response: {request.method} {request.url.path} - Status: {response.status_code}")
+    return response
+
 app.include_router(ai_router, prefix="/api", tags=["AI"])
 app.include_router(transaction_router, prefix="/api/transactions", tags=["Transactions"])
 app.include_router(user_router, prefix="/api/users", tags=["Users"])
 app.include_router(debt_router, prefix="/api/debts", tags=["Debts"])
+app.include_router(payment_router, prefix="/api/payments", tags=["Payments"])
 
 if __name__ == "__main__":
     import uvicorn

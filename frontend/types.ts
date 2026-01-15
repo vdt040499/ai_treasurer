@@ -22,6 +22,8 @@ export interface Member {
   avatar: string;
   created_at: string;
   contributions: string[];
+  debt_amount?: number;
+  debt_description?: string;
 }
 
 export interface FundStats {

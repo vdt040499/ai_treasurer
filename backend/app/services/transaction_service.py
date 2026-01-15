@@ -117,7 +117,8 @@ class TransactionService(BaseService):
         Returns:
             Updated transaction or None
         """
-        return self.update(id, transaction.model_dump())
+        # Avoid overwriting existing columns with NULL when not provided
+        return self.update(id, transaction.model_dump(exclude_none=True))
 
     def delete_transaction(self, id: int) -> bool:
         """
@@ -147,6 +148,23 @@ class TransactionService(BaseService):
         if error_msg:
             data["err_message"] = error_msg
         return self.update(id, data)
+
+    def get_transaction_by_order_code(self, order_code: int) -> Optional[Dict[str, Any]]:
+        """
+        Get transaction by order_code.
+        Tạm thời tìm bằng cách parse order_code từ description field.
+        Format: PAYOS_ORDER:{order_code}:{original_description}
+        
+        Args:
+            order_code: PayOS order code
+            
+        Returns:
+            Transaction or None if not found
+        """
+        # Tìm transaction có description chứa order_code
+        # Sử dụng pattern matching trong description
+        response = self.client.table(self.table_name).select("*").eq("order_code", order_code).execute()
+        return self._get_first_item(response.data)
 
     def get_all_incomes(self, start_date: Optional[str] = None, end_date: Optional[str] = None) -> List[Dict[str, Any]]:
         """
