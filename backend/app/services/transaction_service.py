@@ -37,7 +37,7 @@ class TransactionService(BaseService):
         """
         # Join với users table - Supabase tự động detect foreign key relationship
         # Nếu không work, thử: users!user_id(*) hoặc users!inner(*)
-        query = self.client.table(self.table_name).select("*, users(*)").order("transaction_date", desc=True)
+        query = self.client.table(self.table_name).select("*, users(*)").eq("status", "COMPLETED").order("transaction_date", desc=True)
 
         # Filter for amount greater than 0
         query = query.gt("amount", 0)

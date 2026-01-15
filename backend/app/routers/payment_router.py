@@ -8,8 +8,12 @@ from app.models.transaction_entry_model import TransactionEntryCreate
 from app.constants import MONTHLY_FEE
 from pydantic import BaseModel
 from datetime import datetime
+import os
 import time
 import logging
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +35,7 @@ async def create_payment(request: CreatePaymentRequest):
     order_code = int(time.time())
     logger.info(f"[CREATE_PAYMENT] Generated order_code: {order_code}")
     
-    domain = "http://localhost:3000"
+    domain = os.environ.get("FRONTEND_URL")
     
     checkout_url = payos_service.create_payment_link(
         order_code=order_code,
