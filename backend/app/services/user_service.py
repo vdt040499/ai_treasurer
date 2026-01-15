@@ -65,31 +65,45 @@ class UserService(BaseService):
         users = self.get_users()
 
         current_year = datetime.now().year
+        current_month = datetime.now().month
 
-        # Get all transaction entries grouped by user_id
+        # Get all transaction entries in one query - both FUND and DEBT_PAYMENT types
         transaction_entry_service = self.client.table("transaction_entries")
-        query = transaction_entry_service.select("*").eq("type", "FUND")
+        query = transaction_entry_service.select("*").in_("type", ["FUND", "DEBT_PAYMENT"])
         query = query.ilike("period_month", f"{current_year}%")
-        transaction_entries = query.execute()
+        all_transaction_entries = query.execute()
 
-
+        # Get all unpaid debts in one query
         debt_service = self.client.table("debts")
         query = debt_service.select("*").eq("is_fully_paid", False)
         debt_entries = query.execute()
     
-        # Group transactions by user_id
-        total_user_amount: Dict[int, Dict[str, int]] = {}
-        for tx in transaction_entries.data:
+        # Create a dictionary for O(1) debt lookup by user_id
+        debt_by_user: Dict[int, Dict[str, Any]] = {}
+        for debt in debt_entries.data:
+            user_id = debt.get('user_id')
+            if user_id:
+                debt_by_user[user_id] = debt
+    
+        # Group transactions by user_id and type
+        total_user_amount: Dict[int, Dict[str, Any]] = {}
+        for tx in all_transaction_entries.data:
             user_id = tx.get('user_id')
+            tx_type = tx.get('type')
+            
             if user_id not in total_user_amount:
                 total_user_amount[user_id] = {
                     "total_income": 0,
                     "paid_months": [],
+                    "paid_debt_total": 0,
                 }
 
             amount = tx.get('amount', 0)
-            total_user_amount[user_id]["total_income"] += amount
-            total_user_amount[user_id]["paid_months"].append(tx.get('period_month'))
+            if tx_type == "FUND":
+                total_user_amount[user_id]["total_income"] += amount
+                total_user_amount[user_id]["paid_months"].append(tx.get('period_month'))
+            elif tx_type == "DEBT_PAYMENT":
+                total_user_amount[user_id]["paid_debt_total"] += amount
         
         result = []
         for user in users:
@@ -100,22 +114,20 @@ class UserService(BaseService):
             joined_date = created_at[:7] if created_at else ''
             
             # Get user's transaction totals, default to 0 if no transactions
-            user_totals = total_user_amount.get(user_id, {"total_income": 0, "paid_months": []})
+            user_totals = total_user_amount.get(user_id, {
+                "total_income": 0, 
+                "paid_months": [],
+                "paid_debt_total": 0
+            })
             income_total = user_totals.get("total_income", 0)
             contributions = sorted(user_totals.get("paid_months", []))
-            debt_entry = next((debt for debt in debt_entries.data if debt.get("user_id") == user_id), None)
-            debt_id = debt_entry.get('id', None) if debt_entry else None
+            paid_debt_total = user_totals.get("paid_debt_total", 0)
             
-            transaction_entry_service = self.client.table("transaction_entries")
-            paid_debt_query = transaction_entry_service.select("*").eq("user_id", user_id).eq("type", "DEBT_PAYMENT")
-            paid_debt_query = paid_debt_query.ilike("period_month", f"{current_year}%")
-            paid_debt_entries = paid_debt_query.execute()
-            paid_debt_total = sum(entry.get('amount', 0) for entry in paid_debt_entries.data)
-            
+            # O(1) lookup for debt entry
+            debt_entry = debt_by_user.get(user_id)
             debt_total = debt_entry.get('amount', 0) if debt_entry else 0
             debt_description = debt_entry.get('description', '') if debt_entry else ''
 
-            current_month = datetime.now().month
             debt_amount = income_total - current_month * MONTHLY_FEE - debt_total + paid_debt_total
 
             # Admin debt is 0
