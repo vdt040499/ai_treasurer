@@ -840,190 +840,455 @@ const DuckRaceModal: React.FC<DuckRaceModalProps> = ({ isOpen, onClose }) => {
             </div>
           )}
 
-          {/* COUNTDOWN PHASE */}
+          {/* COUNTDOWN PHASE - 2.5D View */}
           {gamePhase === 'countdown' && (
-            <div className="relative h-[400px] overflow-hidden rounded-2xl">
-              {/* Sky gradient background */}
-              <div className="absolute inset-0 bg-gradient-to-b from-sky-400 via-sky-300 to-cyan-400"></div>
-
-              {/* Clouds */}
-              <div className="absolute top-4 left-10 w-24 h-10 bg-white/60 rounded-full blur-sm"></div>
-              <div className="absolute top-2 right-1/4 w-32 h-12 bg-white/50 rounded-full blur-sm"></div>
-
-              {/* Grass at top */}
-              <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-green-600 to-green-500/80"></div>
-
-              {/* Water area */}
-              <div className="absolute top-20 left-0 right-0 bottom-0 bg-gradient-to-b from-cyan-400 via-sky-400 to-blue-500"></div>
-
-              {/* Countdown number */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <div
-                    className="text-[150px] font-black text-white drop-shadow-2xl animate-pulse"
-                    style={{
-                      textShadow: '0 0 60px rgba(255,255,255,0.9), 0 0 100px rgba(255,255,255,0.5)',
-                      WebkitTextStroke: '4px rgba(0,0,0,0.2)'
-                    }}
-                  >
-                    {countdown}
-                  </div>
-                  <p className="text-white text-2xl font-bold drop-shadow-lg animate-bounce">
-                    {countdown === 3 ? 'Sẵn sàng...' : countdown === 2 ? 'Chuẩn bị...' : 'XUẤT PHÁT!'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Waiting ducks at start line */}
-              <div className="absolute bottom-20 left-8 flex flex-col gap-2">
-                {foods.slice(0, 5).map((_, i) => (
-                  <div key={i} className="opacity-60">
-                    <DuckSVG color={DUCK_COLORS[i % DUCK_COLORS.length]} size={40} isAnimating={false} />
-                  </div>
-                ))}
-              </div>
-
-              {/* Bottom title bar */}
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-r from-red-600 via-red-500 to-red-600 py-3 px-6">
-                <h2 className="text-3xl font-black text-white tracking-wider drop-shadow-lg" style={{ fontStyle: 'italic' }}>
-                  ĐUA VỊT
-                </h2>
-              </div>
-            </div>
-          )}
-
-          {/* RACING PHASE */}
-          {gamePhase === 'racing' && (
             <div className="relative">
-              {/* Pool container with perspective */}
-              <div className="relative h-[400px] overflow-hidden rounded-2xl">
+              <div
+                className="relative h-[450px] overflow-hidden rounded-t-2xl"
+                style={{
+                  perspective: '1200px',
+                  perspectiveOrigin: '50% 25%'
+                }}
+              >
                 {/* Sky gradient background */}
-                <div className="absolute inset-0 bg-gradient-to-b from-sky-400 via-sky-300 to-cyan-400"></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-sky-300 via-sky-400 to-cyan-500"></div>
 
-                {/* Clouds */}
-                <div className="absolute top-4 left-10 w-24 h-10 bg-white/60 rounded-full blur-sm"></div>
-                <div className="absolute top-8 left-20 w-16 h-6 bg-white/40 rounded-full blur-sm"></div>
-                <div className="absolute top-2 right-1/4 w-32 h-12 bg-white/50 rounded-full blur-sm"></div>
+                {/* Animated Clouds */}
+                <div className="absolute top-2 w-40 h-14 bg-white/50 rounded-full blur-md animate-cloud-drift-slow" style={{ animationDelay: '0s' }}></div>
+                <div className="absolute top-6 w-28 h-10 bg-white/40 rounded-full blur-md animate-cloud-drift-slow" style={{ animationDelay: '-10s' }}></div>
+                <div className="absolute top-4 w-36 h-12 bg-white/45 rounded-full blur-md animate-cloud-drift" style={{ animationDelay: '-5s' }}></div>
 
-                {/* Grass/trees reflection at top */}
-                <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-green-600 to-green-500/80"></div>
-                <div className="absolute top-12 left-0 right-0 h-8 bg-gradient-to-b from-green-500/60 to-transparent"></div>
-
-                {/* Water area */}
-                <div className="absolute top-20 left-0 right-0 bottom-0 bg-gradient-to-b from-cyan-400 via-sky-400 to-blue-500">
-                  {/* Water ripple effects */}
-                  <div className="absolute inset-0 opacity-20" style={{
-                    backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 20px, rgba(255,255,255,0.3) 20px, rgba(255,255,255,0.3) 22px)',
+                {/* Grass/Vegetation at top */}
+                <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-green-700 via-green-600 to-green-500/90">
+                  <div className="absolute inset-0 opacity-30" style={{
+                    backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 8px, rgba(0,100,0,0.3) 8px, rgba(0,100,0,0.3) 10px)',
                   }}></div>
                 </div>
+                <div className="absolute top-16 left-0 right-0 h-12 bg-gradient-to-b from-green-500/50 via-green-400/30 to-transparent"></div>
 
-                {/* Checkered finish line - diagonal */}
-                <div className="absolute top-20 right-12 bottom-0 w-8 overflow-hidden" style={{ transform: 'skewX(-15deg)' }}>
+                {/* 2.5D Water Surface */}
+                <div
+                  className="absolute top-24 left-0 right-0 bottom-0"
+                  style={{
+                    background: 'linear-gradient(180deg, #38bdf8 0%, #0ea5e9 30%, #0284c7 60%, #0369a1 100%)',
+                  }}
+                >
+                  <div className="absolute inset-0 opacity-25 animate-water-shimmer" style={{
+                    backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(255,255,255,0.4) 15px, rgba(255,255,255,0.4) 17px)',
+                  }}></div>
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-600/20 to-blue-800/40"></div>
+                </div>
+
+                {/* Finish line preview */}
+                <div
+                  className="absolute top-20 right-8 bottom-0 w-12 overflow-hidden shadow-xl opacity-60"
+                  style={{
+                    transform: 'skewX(-20deg) perspective(500px) rotateY(-5deg)',
+                    boxShadow: '-4px 0 15px rgba(0,0,0,0.3)'
+                  }}
+                >
                   <div className="w-full h-full" style={{
-                    backgroundImage: `repeating-linear-gradient(
-                      0deg,
-                      white 0px, white 20px,
-                      #333 20px, #333 40px
-                    )`,
-                    backgroundSize: '100% 40px'
+                    backgroundImage: `repeating-linear-gradient(0deg, white 0px, white 18px, #1a1a1a 18px, #1a1a1a 36px)`,
+                    backgroundSize: '100% 36px'
                   }}></div>
                 </div>
 
-                {/* Ducks swimming in pool */}
+                {/* Countdown number */}
+                <div className="absolute inset-0 flex items-center justify-center z-30">
+                  <div className="text-center">
+                    <div
+                      className="text-[180px] font-black text-white drop-shadow-2xl animate-pulse"
+                      style={{
+                        textShadow: '0 0 80px rgba(255,255,255,0.9), 0 0 120px rgba(255,255,255,0.5), 0 4px 20px rgba(0,0,0,0.3)',
+                        WebkitTextStroke: '4px rgba(0,0,0,0.15)'
+                      }}
+                    >
+                      {countdown}
+                    </div>
+                    <p className="text-white text-3xl font-bold drop-shadow-lg animate-bounce mt-2">
+                      {countdown === 3 ? 'Sẵn sàng...' : countdown === 2 ? 'Chuẩn bị...' : 'XUẤT PHÁT!'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Waiting ducks at start line with 2.5D positioning */}
                 {foods.map((food, i) => {
                   const color = DUCK_COLORS[i % DUCK_COLORS.length];
-                  const position = duckPositions[i] || 0;
-                  const verticalPosition = 25 + (i * (55 / Math.max(foods.length, 1)));
+                  const verticalPosition = 28 + (i * (58 / Math.max(foods.length, 1)));
+                  const depthRatio = i / Math.max(foods.length - 1, 1);
+                  const depthScale = 1.1 - (depthRatio * 0.35);
 
                   return (
                     <div
                       key={i}
-                      className="absolute transition-all duration-100 ease-linear"
+                      className="absolute opacity-70"
                       style={{
-                        left: `calc(${Math.min(position * 0.75, 72)}%)`,
+                        left: '5%',
                         top: `${verticalPosition}%`,
-                        zIndex: 10 + i
+                        zIndex: 50 - i,
+                        transform: `scale(${depthScale})`,
+                        transformOrigin: 'center bottom'
                       }}
                     >
-                      {/* Food label floating above duck */}
-                      <div className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap z-20">
-                        <span className={`px-3 py-1.5 ${color.label} text-white rounded-lg text-xs font-bold shadow-lg border border-white/30`}>
+                      <div
+                        className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap"
+                        style={{ transform: `scale(${1 / depthScale})` }}
+                      >
+                        <span className={`px-3 py-1.5 ${color.label} text-white rounded-lg text-xs font-bold shadow-lg border border-white/30 backdrop-blur-sm`}>
                           {food}
                         </span>
                       </div>
-
-                      {/* Duck SVG */}
-                      <DuckSVG color={color} size={50} isAnimating={true} />
+                      <DuckSVG color={color} size={55} isAnimating={false} />
                     </div>
                   );
                 })}
               </div>
 
               {/* Bottom title bar */}
-              <div className="bg-gradient-to-r from-red-600 via-red-500 to-red-600 py-3 px-6">
-                <h2 className="text-3xl font-black text-white tracking-wider drop-shadow-lg" style={{ fontStyle: 'italic' }}>
+              <div className="bg-gradient-to-r from-red-700 via-red-500 to-red-700 py-4 px-6 rounded-b-2xl shadow-inner">
+                <h2
+                  className="text-4xl font-black text-white tracking-widest drop-shadow-lg text-center"
+                  style={{
+                    fontStyle: 'italic',
+                    textShadow: '2px 2px 4px rgba(0,0,0,0.3), 0 0 20px rgba(255,255,255,0.2)'
+                  }}
+                >
                   ĐUA VỊT
                 </h2>
               </div>
             </div>
           )}
 
-          {/* PAUSED PHASE */}
-          {gamePhase === 'paused' && (
-            <div className="relative h-[400px] overflow-hidden rounded-2xl">
-              {/* Background - show frozen race state */}
-              <div className="absolute inset-0 bg-gradient-to-b from-sky-400 via-sky-300 to-cyan-400"></div>
-              <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-green-600 to-green-500/80"></div>
-              <div className="absolute top-20 left-0 right-0 bottom-0 bg-gradient-to-b from-cyan-400 via-sky-400 to-blue-500 opacity-50"></div>
+          {/* RACING PHASE - 2.5D View */}
+          {gamePhase === 'racing' && (
+            <div className="relative">
+              {/* 2.5D Pool container with perspective */}
+              <div
+                className="relative h-[450px] overflow-hidden rounded-t-2xl"
+                style={{
+                  perspective: '1200px',
+                  perspectiveOrigin: '50% 25%'
+                }}
+              >
+                {/* Sky gradient background */}
+                <div className="absolute inset-0 bg-gradient-to-b from-sky-300 via-sky-400 to-cyan-500"></div>
 
-              {/* Frozen ducks */}
-              {foods.map((food, i) => {
-                const color = DUCK_COLORS[i % DUCK_COLORS.length];
-                const position = duckPositions[i] || 0;
-                const verticalPosition = 25 + (i * (55 / Math.max(foods.length, 1)));
+                {/* Animated Clouds - Layer 1 (Back) */}
+                <div className="absolute top-2 w-40 h-14 bg-white/50 rounded-full blur-md animate-cloud-drift-slow" style={{ animationDelay: '0s' }}></div>
+                <div className="absolute top-6 w-28 h-10 bg-white/40 rounded-full blur-md animate-cloud-drift-slow" style={{ animationDelay: '-10s' }}></div>
+                <div className="absolute top-4 w-36 h-12 bg-white/45 rounded-full blur-md animate-cloud-drift" style={{ animationDelay: '-5s' }}></div>
 
-                return (
-                  <div
-                    key={i}
-                    className="absolute opacity-50"
-                    style={{
-                      left: `calc(${Math.min(position * 0.75, 72)}%)`,
-                      top: `${verticalPosition}%`,
-                      zIndex: 10 + i
-                    }}
+                {/* Animated Clouds - Layer 2 (Front) */}
+                <div className="absolute top-8 w-24 h-8 bg-white/60 rounded-full blur-sm animate-cloud-drift" style={{ animationDelay: '-15s' }}></div>
+                <div className="absolute top-3 w-20 h-7 bg-white/55 rounded-full blur-sm animate-cloud-drift" style={{ animationDelay: '-20s' }}></div>
+
+                {/* Grass/Vegetation at top with texture */}
+                <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-green-700 via-green-600 to-green-500/90">
+                  {/* Grass texture lines */}
+                  <div className="absolute inset-0 opacity-30" style={{
+                    backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 8px, rgba(0,100,0,0.3) 8px, rgba(0,100,0,0.3) 10px)',
+                  }}></div>
+                </div>
+
+                {/* Grass reflection in water */}
+                <div className="absolute top-16 left-0 right-0 h-12 bg-gradient-to-b from-green-500/50 via-green-400/30 to-transparent"></div>
+
+                {/* 2.5D Water Surface with perspective */}
+                <div
+                  className="absolute top-24 left-0 right-0 bottom-0"
+                  style={{
+                    background: 'linear-gradient(180deg, #38bdf8 0%, #0ea5e9 30%, #0284c7 60%, #0369a1 100%)',
+                    transformStyle: 'preserve-3d'
+                  }}
+                >
+                  {/* Water wave pattern */}
+                  <div className="absolute inset-0 opacity-25 animate-water-shimmer" style={{
+                    backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(255,255,255,0.4) 15px, rgba(255,255,255,0.4) 17px)',
+                  }}></div>
+
+                  {/* Water depth gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-600/20 to-blue-800/40"></div>
+
+                  {/* Caustic light patterns */}
+                  <div className="absolute inset-0 opacity-10" style={{
+                    backgroundImage: `radial-gradient(ellipse 60px 30px at 20% 40%, rgba(255,255,255,0.6) 0%, transparent 70%),
+                                      radial-gradient(ellipse 80px 40px at 60% 60%, rgba(255,255,255,0.5) 0%, transparent 70%),
+                                      radial-gradient(ellipse 50px 25px at 80% 30%, rgba(255,255,255,0.4) 0%, transparent 70%)`,
+                  }}></div>
+                </div>
+
+                {/* Checkered finish line - 2.5D diagonal */}
+                <div
+                  className="absolute top-20 right-8 bottom-0 w-12 overflow-hidden shadow-xl"
+                  style={{
+                    transform: 'skewX(-20deg) perspective(500px) rotateY(-5deg)',
+                    boxShadow: '-4px 0 15px rgba(0,0,0,0.3)'
+                  }}
+                >
+                  <div className="w-full h-full" style={{
+                    backgroundImage: `repeating-linear-gradient(
+                      0deg,
+                      white 0px, white 18px,
+                      #1a1a1a 18px, #1a1a1a 36px
+                    )`,
+                    backgroundSize: '100% 36px'
+                  }}></div>
+                  {/* Finish line highlight */}
+                  <div className="absolute inset-y-0 left-0 w-1 bg-white/50"></div>
+                </div>
+
+                {/* SVG layer for water ripples */}
+                <svg className="absolute top-24 left-0 right-0 bottom-0 pointer-events-none overflow-visible" style={{ width: '100%', height: 'calc(100% - 96px)' }}>
+                  {foods.map((_, i) => {
+                    const position = duckPositions[i] || 0;
+                    const verticalPosition = 15 + (i * (70 / Math.max(foods.length, 1)));
+                    const cx = Math.min(position * 0.72, 70) + 5;
+
+                    return (
+                      <g key={`ripple-${i}`}>
+                        {/* Multiple ripple rings */}
+                        <ellipse
+                          cx={`${cx}%`}
+                          cy={`${verticalPosition + 8}%`}
+                          rx="25"
+                          ry="8"
+                          fill="none"
+                          stroke="rgba(255,255,255,0.4)"
+                          strokeWidth="2"
+                        >
+                          <animate attributeName="rx" values="20;40;55" dur="1.2s" repeatCount="indefinite" />
+                          <animate attributeName="ry" values="6;12;16" dur="1.2s" repeatCount="indefinite" />
+                          <animate attributeName="opacity" values="0.5;0.2;0" dur="1.2s" repeatCount="indefinite" />
+                        </ellipse>
+                        <ellipse
+                          cx={`${cx}%`}
+                          cy={`${verticalPosition + 8}%`}
+                          rx="15"
+                          ry="5"
+                          fill="none"
+                          stroke="rgba(255,255,255,0.5)"
+                          strokeWidth="1.5"
+                        >
+                          <animate attributeName="rx" values="15;30;45" dur="1.2s" begin="0.3s" repeatCount="indefinite" />
+                          <animate attributeName="ry" values="5;10;14" dur="1.2s" begin="0.3s" repeatCount="indefinite" />
+                          <animate attributeName="opacity" values="0.6;0.3;0" dur="1.2s" begin="0.3s" repeatCount="indefinite" />
+                        </ellipse>
+                      </g>
+                    );
+                  })}
+                </svg>
+
+                {/* Ducks swimming in pool with 2.5D depth */}
+                {foods.map((food, i) => {
+                  const color = DUCK_COLORS[i % DUCK_COLORS.length];
+                  const position = duckPositions[i] || 0;
+                  const totalDucks = foods.length;
+                  const verticalPosition = 28 + (i * (58 / Math.max(totalDucks, 1)));
+
+                  // Depth-based scaling: ducks further back (higher index/y) appear smaller
+                  const depthRatio = i / Math.max(totalDucks - 1, 1);
+                  const depthScale = 1.1 - (depthRatio * 0.35); // Scale from 1.1 to 0.75
+                  const duckZIndex = 50 - i; // Closer ducks (lower index) have higher z-index
+
+                  return (
+                    <div
+                      key={i}
+                      className="absolute transition-all duration-100 ease-linear"
+                      style={{
+                        left: `calc(${Math.min(position * 0.72, 70)}%)`,
+                        top: `${verticalPosition}%`,
+                        zIndex: duckZIndex,
+                        transform: `scale(${depthScale})`,
+                        transformOrigin: 'center bottom'
+                      }}
+                    >
+                      {/* Food label floating above duck */}
+                      <div
+                        className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap"
+                        style={{
+                          zIndex: duckZIndex + 1,
+                          transform: `scale(${1 / depthScale})` // Counter-scale to keep labels same size
+                        }}
+                      >
+                        <span className={`px-3 py-1.5 ${color.label} text-white rounded-lg text-xs font-bold shadow-lg border border-white/30 backdrop-blur-sm`}>
+                          {food}
+                        </span>
+                      </div>
+
+                      {/* Duck SVG with bob animation */}
+                      <div className="animate-duck-bob">
+                        <DuckSVG color={color} size={55} isAnimating={true} />
+                      </div>
+
+                      {/* Duck reflection in water */}
+                      <div
+                        className="absolute top-full left-0 opacity-25 blur-[2px] pointer-events-none"
+                        style={{
+                          transform: 'scaleY(-0.4) translateY(-10px)',
+                          filter: 'blur(2px) brightness(0.8)'
+                        }}
+                      >
+                        <DuckSVG color={color} size={55} isAnimating={false} />
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Top UI Bar - Glass morphism */}
+                <div className="absolute top-2 left-2 right-2 flex justify-between items-center z-50">
+                  {/* Pause button */}
+                  <button
+                    onClick={pauseGame}
+                    className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center hover:bg-white/30 transition-all shadow-lg"
                   >
-                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap z-20">
-                      <span className={`px-3 py-1.5 ${color.label} text-white rounded-lg text-xs font-bold shadow-lg border border-white/30`}>
-                        {food}
+                    <span className="text-white text-xl">⏸</span>
+                  </button>
+
+                  {/* Timer */}
+                  <div className="px-6 py-2 rounded-full bg-white/20 backdrop-blur-md border border-white/30 shadow-lg">
+                    <div className="flex items-center gap-2">
+                      <span className="text-white text-lg">⏱</span>
+                      <span className="text-white font-bold text-xl tabular-nums">
+                        {String(Math.floor(raceTime / 60000)).padStart(2, '0')}:{String(Math.floor((raceTime % 60000) / 1000)).padStart(2, '0')}
                       </span>
                     </div>
-                    <DuckSVG color={color} size={50} isAnimating={false} />
                   </div>
-                );
-              })}
 
-              {/* Pause overlay */}
-              <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-30">
-                <div className="bg-white rounded-3xl p-8 shadow-2xl text-center space-y-6 max-w-sm mx-4">
-                  <div className="text-6xl">⏸️</div>
-                  <h3 className="text-2xl font-bold text-slate-800">Tạm dừng</h3>
-                  <p className="text-slate-500">Cuộc đua đang tạm dừng</p>
+                  {/* Sound toggle */}
+                  <button
+                    onClick={() => setSoundEnabled(!soundEnabled)}
+                    className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center hover:bg-white/30 transition-all shadow-lg"
+                  >
+                    <span className="text-white text-xl">{soundEnabled ? '🔊' : '🔇'}</span>
+                  </button>
+                </div>
+              </div>
 
-                  <div className="flex flex-col gap-3">
-                    <button
-                      onClick={resumeGame}
-                      className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold text-lg hover:from-green-600 hover:to-emerald-700 transition-all hover:scale-105 active:scale-95 shadow-lg"
+              {/* Bottom title bar - Enhanced */}
+              <div className="bg-gradient-to-r from-red-700 via-red-500 to-red-700 py-4 px-6 rounded-b-2xl shadow-inner">
+                <h2
+                  className="text-4xl font-black text-white tracking-widest drop-shadow-lg text-center"
+                  style={{
+                    fontStyle: 'italic',
+                    textShadow: '2px 2px 4px rgba(0,0,0,0.3), 0 0 20px rgba(255,255,255,0.2)'
+                  }}
+                >
+                  ĐUA VỊT
+                </h2>
+              </div>
+            </div>
+          )}
+
+          {/* PAUSED PHASE - 2.5D View */}
+          {gamePhase === 'paused' && (
+            <div className="relative">
+              <div
+                className="relative h-[450px] overflow-hidden rounded-t-2xl"
+                style={{
+                  perspective: '1200px',
+                  perspectiveOrigin: '50% 25%'
+                }}
+              >
+                {/* Sky gradient background */}
+                <div className="absolute inset-0 bg-gradient-to-b from-sky-300 via-sky-400 to-cyan-500 opacity-60"></div>
+
+                {/* Grass at top */}
+                <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-green-700 via-green-600 to-green-500/90 opacity-60"></div>
+                <div className="absolute top-16 left-0 right-0 h-12 bg-gradient-to-b from-green-500/50 via-green-400/30 to-transparent opacity-60"></div>
+
+                {/* Water Surface - dimmed */}
+                <div
+                  className="absolute top-24 left-0 right-0 bottom-0 opacity-50"
+                  style={{
+                    background: 'linear-gradient(180deg, #38bdf8 0%, #0ea5e9 30%, #0284c7 60%, #0369a1 100%)',
+                  }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-600/20 to-blue-800/40"></div>
+                </div>
+
+                {/* Finish line - dimmed */}
+                <div
+                  className="absolute top-20 right-8 bottom-0 w-12 overflow-hidden opacity-40"
+                  style={{
+                    transform: 'skewX(-20deg) perspective(500px) rotateY(-5deg)',
+                  }}
+                >
+                  <div className="w-full h-full" style={{
+                    backgroundImage: `repeating-linear-gradient(0deg, white 0px, white 18px, #1a1a1a 18px, #1a1a1a 36px)`,
+                    backgroundSize: '100% 36px'
+                  }}></div>
+                </div>
+
+                {/* Frozen ducks with 2.5D positioning */}
+                {foods.map((food, i) => {
+                  const color = DUCK_COLORS[i % DUCK_COLORS.length];
+                  const position = duckPositions[i] || 0;
+                  const totalDucks = foods.length;
+                  const verticalPosition = 28 + (i * (58 / Math.max(totalDucks, 1)));
+                  const depthRatio = i / Math.max(totalDucks - 1, 1);
+                  const depthScale = 1.1 - (depthRatio * 0.35);
+
+                  return (
+                    <div
+                      key={i}
+                      className="absolute opacity-40"
+                      style={{
+                        left: `calc(${Math.min(position * 0.72, 70)}%)`,
+                        top: `${verticalPosition}%`,
+                        zIndex: 50 - i,
+                        transform: `scale(${depthScale})`,
+                        transformOrigin: 'center bottom'
+                      }}
                     >
-                      ▶️ Tiếp tục đua
-                    </button>
-                    <button
-                      onClick={resetGame}
-                      className="w-full py-4 bg-gradient-to-r from-slate-500 to-slate-600 text-white rounded-xl font-bold text-lg hover:from-slate-600 hover:to-slate-700 transition-all hover:scale-105 active:scale-95 shadow-lg"
-                    >
-                      🔙 Quay lại chọn món
-                    </button>
+                      <div
+                        className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap"
+                        style={{ transform: `scale(${1 / depthScale})` }}
+                      >
+                        <span className={`px-3 py-1.5 ${color.label} text-white rounded-lg text-xs font-bold shadow-lg border border-white/30`}>
+                          {food}
+                        </span>
+                      </div>
+                      <DuckSVG color={color} size={55} isAnimating={false} />
+                    </div>
+                  );
+                })}
+
+                {/* Pause overlay */}
+                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                  <div className="bg-white/95 backdrop-blur-md rounded-3xl p-8 shadow-2xl text-center space-y-6 max-w-sm mx-4 border border-white/50">
+                    <div className="text-7xl">⏸️</div>
+                    <h3 className="text-2xl font-bold text-slate-800">Tạm dừng</h3>
+                    <p className="text-slate-500">Cuộc đua đang tạm dừng</p>
+
+                    <div className="flex flex-col gap-3">
+                      <button
+                        onClick={resumeGame}
+                        className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold text-lg hover:from-green-600 hover:to-emerald-700 transition-all hover:scale-105 active:scale-95 shadow-lg"
+                      >
+                        ▶️ Tiếp tục đua
+                      </button>
+                      <button
+                        onClick={resetGame}
+                        className="w-full py-4 bg-gradient-to-r from-slate-500 to-slate-600 text-white rounded-xl font-bold text-lg hover:from-slate-600 hover:to-slate-700 transition-all hover:scale-105 active:scale-95 shadow-lg"
+                      >
+                        🔙 Quay lại chọn món
+                      </button>
+                    </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Bottom title bar */}
+              <div className="bg-gradient-to-r from-red-700 via-red-500 to-red-700 py-4 px-6 rounded-b-2xl shadow-inner opacity-70">
+                <h2
+                  className="text-4xl font-black text-white tracking-widest drop-shadow-lg text-center"
+                  style={{
+                    fontStyle: 'italic',
+                    textShadow: '2px 2px 4px rgba(0,0,0,0.3), 0 0 20px rgba(255,255,255,0.2)'
+                  }}
+                >
+                  ĐUA VỊT
+                </h2>
               </div>
             </div>
           )}
