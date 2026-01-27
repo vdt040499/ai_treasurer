@@ -6,6 +6,7 @@ import MemberStatus from './components/MemberStatus';
 import ChatBot from './components/ChatBot';
 import FoodExpenseTracker from './components/FoodExpenseTracker';
 import DebtTracker from './components/DebtTracker';
+import DuckRaceModal from './components/DuckRaceModal';
 import { Transaction, Member, TransactionType } from './types';
 import { getUsersWithContributions } from './services/userService';
 import { getTransactions } from './services/transactionService';
@@ -19,6 +20,7 @@ const App: React.FC = () => {
   const [debtTransactions, setDebtTransactions] = useState<Transaction[]>([]);
   const [isLoadingMembers, setIsLoadingMembers] = useState<boolean>(true);
   const [isLoadingTransactions, setIsLoadingTransactions] = useState<boolean>(true);
+  const [isDuckRaceOpen, setIsDuckRaceOpen] = useState<boolean>(false);
 
   useEffect(() => {
     let isFirstLoad = true;
@@ -175,14 +177,17 @@ const App: React.FC = () => {
           </div>
           <div className="flex flex-col gap-6">
              <DebtTracker members={members} isLoading={isLoadingMembers} />
-             <div className="p-6 rounded-3xl bg-gradient-to-br from-blue-600 to-orange-500 text-white shadow-xl">
-                <h3 className="text-xl font-bold mb-2">Hôm nay ăn gì ? 🍽️</h3>
+             <div className="p-6 rounded-3xl bg-gradient-to-br from-yellow-400 to-orange-500 text-white shadow-xl">
+                <h3 className="text-xl font-bold mb-2">Hôm nay ăn gì ? 🦆</h3>
                 <p className="text-white/80 text-sm leading-relaxed mb-4">
-                  Chức năng gợi ý món ăn đang được phát triển và sẽ sớm ra mắt. Cả nhà kiên nhẫn chờ đợi nhé!
+                  Khó chọn món? Để mấy con vịt quyết định giúp bạn!
                 </p>
-                {/* <button className="w-full py-2 bg-white/20 hover:bg-white/30 rounded-xl font-bold transition-all text-sm">
-                  Trong thời gian chờ đợi chức năng hoàn hiện. Nhờ ... chọn món cho lần ăn sắp tới nhé.
-                </button> */}
+                <button
+                  onClick={() => setIsDuckRaceOpen(true)}
+                  className="w-full py-3 bg-white/20 hover:bg-white/30 rounded-xl font-bold transition-all text-sm hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  🏁 Đua Vịt Chọn Món
+                </button>
              </div>
           </div>
         </div>
@@ -192,6 +197,12 @@ const App: React.FC = () => {
       <aside className="w-full lg:w-96 flex-shrink-0 lg:sticky lg:top-6 self-start order-1 lg:order-2 relative z-0" style={{ height: 'calc(100vh - 48px)' }}>
         <ChatBot />
       </aside>
+
+      {/* Duck Race Modal */}
+      <DuckRaceModal
+        isOpen={isDuckRaceOpen}
+        onClose={() => setIsDuckRaceOpen(false)}
+      />
     </div>
   );
 };
