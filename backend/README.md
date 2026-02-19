@@ -1,181 +1,106 @@
 # AI Treasurer Backend API
 
-Backend API sử dụng FastAPI, Supabase và Google Gemini AI.
+The Backend API uses **FastAPI**, **Supabase**, and **Google Gemini AI**. It supports income/expense management, debt tracking, and PayOS payment integration.
 
-## Yêu cầu
+## 🌟 Backend Features
 
-- Python 3.12 hoặc cao hơn
-- pip (Python package manager)
+*   **Transaction Management API:** Add, edit, delete, and filter transactions by day/month/type.
+*   **AI Chat & Processing:**
+    *   Uses Gemini AI to analyze text messages into structured transactions.
+    *   Extracts information from invoice/transfer images.
+*   **Debt Management:**
+    *   Record debts and cash advances.
+    *   Update payment status (paid/unpaid).
+*   **PayOS Integration:** Automatically generate payment links (under development).
+*   **User Management:** Track fund contributions and payment status.
 
-## Cài đặt
+## 🛠️ System Requirements
 
-### 1. Tạo virtual environment (khuyến nghị)
+*   Python 3.12+
+*   pip
+*   Supabase & Google AI Studio accounts
+
+## 🚀 Detailed Installation
+
+### 1. Create Virtual Environment
 
 ```bash
 cd backend
 python3 -m venv venv
 
-# Kích hoạt virtual environment
-# Trên macOS/Linux:
+# Activate environment:
+# MacOS/Linux:
 source venv/bin/activate
 
-# Trên Windows:
+# Windows:
 # venv\Scripts\activate
 ```
 
-### 2. Cài đặt dependencies
+### 2. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Tạo file `.env`
+### 3. Configure Environment Variables (.env)
 
-Tạo file `.env` trong thư mục `backend/` với nội dung:
+Create a `.env` file in the `backend/` directory based on the template below:
 
 ```env
-# Google AI API Key
-GOOGLE_API_KEY=your_google_api_key_here
+# --- Google AI (Gemini) ---
+GOOGLE_API_KEY=your_google_ai_api_key
 
-# Supabase Configuration
-SUPABASE_URL=your_supabase_url_here
-SUPABASE_KEY=your_supabase_anon_key_here
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key_here
+# --- Supabase Database ---
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
-# Optional: CORS Origins (mặc định: *)
+# --- PayOS (Optional - for payments) ---
+PAYOS_CLIENT_ID=your_client_id
+PAYOS_API_KEY=your_api_key
+PAYOS_CHECKSUM_KEY=your_checksum_key
+
+# --- App Config ---
 CORS_ORIGINS=http://localhost:3000,http://localhost:5173
-
-# Optional: Debug mode
-DEBUG=False
+DEBUG=True
 ```
 
-**Lưu ý:**
-- `SUPABASE_SERVICE_ROLE_KEY` được ưu tiên sử dụng (bypass RLS)
-- Nếu không có `SUPABASE_SERVICE_ROLE_KEY`, sẽ dùng `SUPABASE_KEY`
-- Get API keys từ:
-  - Google AI: https://makersuite.google.com/app/apikey
-  - Supabase: Project Settings → API
+> **Note:** `SUPABASE_SERVICE_ROLE_KEY` is crucial for bypassing RLS (Row Level Security) when necessary on the backend.
 
-## Chạy server
-
-### Cách 1: Sử dụng uvicorn trực tiếp
+### 4. Run Server
 
 ```bash
-# Từ thư mục backend
+# Run with auto-reload (Development)
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### Cách 2: Sử dụng Python module
+## 📚 API Documentation
 
-```bash
-# Từ thư mục backend
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
+After starting the server, access:
+*   **Swagger UI:** [http://localhost:8000/docs](http://localhost:8000/docs) - For direct API testing.
+*   **ReDoc:** [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
-### Cách 3: Chạy trực tiếp từ main.py
+## 📡 Key Endpoints
 
-```bash
-# Từ thư mục backend
-python app/main.py
-```
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| **AI** | `/api/chat` | Chat with AI to create transaction from text |
+| **AI** | `/api/ai/process-income-image` | Upload image to extract transaction |
+| **Transaction** | `/api/transactions/` | Get list of transactions (supports filters) |
+| **Transaction** | `/api/transactions/` | Create new transaction (manual) |
+| **Debt** | `/api/debts/` | Get list of debts |
+| **Debt** | `/api/debts/{id}/pay` | Update debt status to paid |
+| **Payment** | `/api/payments/create` | Create PayOS payment link |
 
-## Kiểm tra server
+## 🐛 Common Troubleshooting
 
-Sau khi chạy, server sẽ chạy tại: `http://localhost:8000`
+1.  **Import/Module not found Error:**
+    *   Ensure venv is activated (`source venv/bin/activate`).
+    *   Re-run `pip install -r requirements.txt`.
 
-### API Documentation
+2.  **Supabase Connection Error:**
+    *   Double check `SUPABASE_URL` and `SUPABASE_KEY` in `.env`.
+    *   Ensure your IP is not blocked by Supabase Network Restrictions.
 
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
-
-### Health Check
-
-```bash
-curl http://localhost:8000/
-```
-
-Response:
-```json
-{
-  "message": "AI Treasurer API is running"
-}
-```
-
-## Cấu trúc project
-
-```
-backend/
-├── app/
-│   ├── main.py              # Entry point
-│   ├── core/
-│   │   ├── config.py        # Configuration
-│   │   ├── database.py      # Supabase client
-│   │   └── queue_manager.py # Background worker
-│   ├── models/              # Pydantic models
-│   ├── routers/             # API routes
-│   └── services/            # Business logic
-├── requirements.txt         # Dependencies
-└── .env                     # Environment variables (tạo file này)
-```
-
-## API Endpoints
-
-### AI Endpoints
-- `POST /api/chat` - Chat với AI để extract transaction từ text
-- `POST /api/ai/process-income-image` - Xử lý ảnh income
-
-### Transaction Endpoints
-- `GET /api/transactions/` - Lấy danh sách transactions (có filters)
-- `POST /api/transactions/` - Tạo transaction mới
-
-### User Endpoints
-- `GET /api/users/` - Lấy danh sách users
-- `POST /api/users/` - Tạo user mới
-
-## Troubleshooting
-
-### Lỗi: "GOOGLE_API_KEY environment variable is not set"
-- Kiểm tra file `.env` có tồn tại không
-- Kiểm tra `GOOGLE_API_KEY` có được set trong `.env` không
-- Đảm bảo file `.env` ở đúng thư mục `backend/`
-
-### Lỗi: "Missing key inputs argument"
-- Kiểm tra `GOOGLE_API_KEY` có đúng format không
-- Đảm bảo không có khoảng trắng thừa trong `.env`
-
-### Lỗi: "Row-level security policy violation"
-- Sử dụng `SUPABASE_SERVICE_ROLE_KEY` thay vì `SUPABASE_KEY`
-- Hoặc cấu hình RLS policies trong Supabase
-
-### Port đã được sử dụng
-```bash
-# Thay đổi port
-uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
-```
-
-## Development
-
-### Auto-reload
-Server tự động reload khi code thay đổi (nếu dùng `--reload` flag).
-
-### Logs
-Logs được in ra console, bao gồm:
-- Worker status
-- API requests
-- Error messages
-
-## Production
-
-Để chạy production, không dùng `--reload`:
-
-```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
-```
-
-Hoặc sử dụng Gunicorn với Uvicorn workers:
-
-```bash
-pip install gunicorn
-gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
-```
-
+3.  **Google AI Key Error:**
+    *   Ensure `GOOGLE_API_KEY` is valid and has access to Gemini Pro/Flash.
