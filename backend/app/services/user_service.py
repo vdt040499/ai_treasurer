@@ -69,7 +69,7 @@ class UserService(BaseService):
 
         # Get all transaction entries in one query - both FUND and DEBT_PAYMENT types
         transaction_entry_service = self.client.table("transaction_entries")
-        query = transaction_entry_service.select("*").in_("type", ["FUND", "DEBT_PAYMENT"])
+        query = transaction_entry_service.select("*").in_("type", ["FUND", "DEBT_PAYMENT", "EXEMPT"])
         query = query.ilike("period_month", f"{current_year}%")
         all_transaction_entries = query.execute()
 
@@ -87,6 +87,7 @@ class UserService(BaseService):
     
         # Group transactions by user_id and type
         total_user_amount: Dict[int, Dict[str, Any]] = {}
+        print(all_transaction_entries.data)
         for tx in all_transaction_entries.data:
             user_id = tx.get('user_id')
             tx_type = tx.get('type')
@@ -96,6 +97,7 @@ class UserService(BaseService):
                     "total_income": 0,
                     "paid_months": [],
                     "paid_debt_total": 0,
+                    "exempt_months": []
                 }
 
             amount = tx.get('amount', 0)
@@ -104,6 +106,8 @@ class UserService(BaseService):
                 total_user_amount[user_id]["paid_months"].append(tx.get('period_month'))
             elif tx_type == "DEBT_PAYMENT":
                 total_user_amount[user_id]["paid_debt_total"] += amount
+            elif tx_type == "EXEMPT":
+                total_user_amount[user_id]["exempt_months"].append(tx.get('period_month'))
         
         result = []
         for user in users:
@@ -116,10 +120,12 @@ class UserService(BaseService):
             # Get user's transaction totals, default to 0 if no transactions
             user_totals = total_user_amount.get(user_id, {
                 "total_income": 0, 
+                "exempt_months": [],
                 "paid_months": [],
                 "paid_debt_total": 0
             })
             income_total = user_totals.get("total_income", 0)
+            exempts = sorted(user_totals.get("exempt_months", []))
             contributions = sorted(user_totals.get("paid_months", []))
             paid_debt_total = user_totals.get("paid_debt_total", 0)
             
@@ -128,7 +134,7 @@ class UserService(BaseService):
             debt_total = debt_entry.get('amount', 0) if debt_entry else 0
             debt_description = debt_entry.get('description', '') if debt_entry else ''
 
-            debt_amount = income_total - current_month * MONTHLY_FEE - debt_total + paid_debt_total
+            debt_amount = income_total - current_month * MONTHLY_FEE - debt_total + paid_debt_total + MONTHLY_FEE * len(exempts)
 
             # Admin debt is 0
             if (user_id == 9 or debt_amount > 0):
@@ -140,6 +146,7 @@ class UserService(BaseService):
                 'avatar': avatar,
                 'created_at': joined_date,
                 'contributions': contributions,
+                'exempts': exempts,
                 'debt_amount': debt_amount,
                 'debt_description': debt_description
             })

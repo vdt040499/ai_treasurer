@@ -17,7 +17,7 @@ const DebtTracker: React.FC<DebtTrackerProps> = ({ members, isLoading = false })
 
   const debts = useMemo(() => {
     return members.map(member => {
-      const unpaidMonths = MONTHS.filter(m => m <= currentMonth && !member.contributions.includes(m));
+      const unpaidMonths = MONTHS.filter(m => m <= currentMonth && !member.contributions.includes(m) && !member.exempts.includes(m));
 
       const totalDebt = -member.debt_amount;
       const debtDescription = member.debt_description;
@@ -31,17 +31,15 @@ const DebtTracker: React.FC<DebtTrackerProps> = ({ members, isLoading = false })
     }).filter(d => d.totalDebt > 0).sort((a, b) => b.totalDebt - a.totalDebt);
   }, [members, currentMonth]);
 
-  console.log(debts);
-
-  const formatCurrency = (val: number) => 
+  const formatCurrency = (val: number) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
 
   const handlePayment = async (debtor: any) => {
     try {
       setProcessingPayment(debtor.id);
-      
+
       const description = `${debtor.name} chuyển`;
-      
+
       const response = await createPaymentLink({
         amount: debtor.totalDebt,
         description: description,
@@ -50,10 +48,10 @@ const DebtTracker: React.FC<DebtTrackerProps> = ({ members, isLoading = false })
 
       // Mở cửa sổ mới để thanh toán PayOS
       window.open(response.checkoutUrl, '_blank');
-      
+
       // Hoặc redirect trực tiếp:
       // window.location.href = response.checkoutUrl;
-      
+
     } catch (error: any) {
       console.error('Error creating payment link:', error);
       alert(error.response?.data?.detail || 'Có lỗi xảy ra khi tạo link thanh toán. Vui lòng thử lại.');
@@ -126,7 +124,7 @@ const DebtTracker: React.FC<DebtTrackerProps> = ({ members, isLoading = false })
             </div>
           )) : (
             <div className="p-10 text-center text-slate-400 font-medium">
-               🎉 Tuyệt vời! Tất cả thành viên đã đóng quỹ đầy đủ.
+              🎉 Tuyệt vời! Tất cả thành viên đã đóng quỹ đầy đủ.
             </div>
           )}
         </div>

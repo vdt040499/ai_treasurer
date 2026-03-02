@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Transaction, TransactionType } from '../types';
-import { getMonths } from '../utils/time';
+import { getCurrentMonth, getMonths } from '../utils/time';
 
 const MONTHS = getMonths();
 
@@ -11,7 +11,7 @@ interface FoodExpenseTrackerProps {
 }
 
 const FoodExpenseTracker: React.FC<FoodExpenseTrackerProps> = ({ transactions, isLoading }) => {
-  const [selectedMonth, setSelectedMonth] = useState(MONTHS[0]);
+  const [selectedMonth, setSelectedMonth] = useState(MONTHS[getCurrentMonth() - 1]);
   // const [itemName, setItemName] = useState('');
   // const [amount, setAmount] = useState('');
 
@@ -34,12 +34,12 @@ const FoodExpenseTracker: React.FC<FoodExpenseTrackerProps> = ({ transactions, i
   // };
 
   const filteredExpenses = useMemo(() => {
-    return transactions.filter(t => 
+    return transactions.filter(t =>
       t.transaction_date.startsWith(selectedMonth)
     ).sort((a, b) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime());
   }, [transactions, selectedMonth]);
 
-  const formatCurrency = (val: number) => 
+  const formatCurrency = (val: number) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
 
   return (
@@ -49,11 +49,11 @@ const FoodExpenseTracker: React.FC<FoodExpenseTrackerProps> = ({ transactions, i
           <h3 className="font-bold text-slate-800 text-lg">Chi tiết chi tiêu món ăn</h3>
           <p className="text-sm text-slate-500 font-medium">Quản lý chi tiết các khoản ăn uống hàng tháng</p>
         </div>
-        
+
         <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-slate-200">
           <span className="pl-3 text-xs font-bold text-slate-400 uppercase">Tháng:</span>
-          <select 
-            value={selectedMonth} 
+          <select
+            value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
             className="bg-transparent text-sm font-semibold text-slate-700 outline-none pr-3 py-1 cursor-pointer"
           >
