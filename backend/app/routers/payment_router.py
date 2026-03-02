@@ -167,7 +167,7 @@ async def payos_webhook(request: Request):
             
             # Tìm FUND entry gần nhất của user
             logger.info(f"[WEBHOOK] Finding latest FUND entry for user_id: {user_id}")
-            latest_fund_entry_query = transaction_entry_service.client.table("transaction_entries").select("period_month").eq("user_id", user_id).eq("type", "FUND").order("period_month", desc=True).limit(1)
+            latest_fund_entry_query = transaction_entry_service.client.table("transaction_entries").select("period_month").eq("user_id", user_id).in_("type", ["FUND", "EXEMPT"]).order("period_month", desc=True).limit(1)
             latest_fund_entry_response = latest_fund_entry_query.execute()
             logger.info(f"[WEBHOOK] Latest FUND entry response: {latest_fund_entry_response.data}")
             
