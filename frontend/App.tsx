@@ -22,6 +22,7 @@ const App: React.FC = () => {
   const [isLoadingMembers, setIsLoadingMembers] = useState<boolean>(true);
   const [isLoadingTransactions, setIsLoadingTransactions] = useState<boolean>(true);
   const [isDuckRaceOpen, setIsDuckRaceOpen] = useState<boolean>(false);
+  const [isChatOpen, setIsChatOpen] = useState<boolean>(false);
 
   const currentMonth = new Date().toISOString().substring(0, 7);
 
@@ -137,7 +138,7 @@ const App: React.FC = () => {
   }, [members, currentMonth]);
 
   return (
-    <div className="min-h-screen relative flex flex-col lg:flex-row p-4 md:p-6 gap-6 max-w-[1600px] mx-auto">
+    <div className="min-h-screen relative flex flex-col p-4 md:p-6 gap-6 max-w-7xl mx-auto">
       {/* Background với gradient và pattern */}
       <div className="fixed inset-0 -z-10 bg-gradient-to-br from-blue-50 via-white to-orange-50"></div>
       <div
@@ -212,10 +213,31 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* AI Assistant Sidebar */}
-      <aside className="w-full lg:w-96 flex-shrink-0 lg:sticky lg:top-6 self-start order-1 lg:order-2 relative z-0" style={{ height: 'calc(100vh - 48px)' }}>
-        <ChatBot />
-      </aside>
+      {/* AI Assistant Floating Panel */}
+      <div
+        className={`fixed bottom-24 right-4 md:right-6 w-[400px] h-[600px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-120px)] transition-all duration-300 transform origin-bottom-right z-50 ${isChatOpen ? 'scale-100 opacity-100' : 'scale-0 opacity-0 pointer-events-none'
+          }`}
+      >
+        <ChatBot onClose={() => setIsChatOpen(false)} />
+      </div>
+
+      {/* AI Assistant Toggle Button */}
+      <button
+        onClick={() => setIsChatOpen(!isChatOpen)}
+        className={`fixed bottom-6 right-4 md:right-6 w-14 h-14 rounded-full text-white shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 ring-4 ring-white/50 animate-bounce-slow ${isChatOpen ? 'bg-orange-500 hover:bg-orange-600' : 'bg-gradient-to-r from-blue-600 to-orange-500'
+          }`}
+        title="Trợ lý AI"
+      >
+        {isChatOpen ? (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        ) : (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+          </svg>
+        )}
+      </button>
 
       {/* Duck Race Modal */}
       <DuckRaceModal

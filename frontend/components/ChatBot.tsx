@@ -5,14 +5,15 @@ import { Transaction } from '../types';
 import { topupTransaction, processExpenseImage } from '@/services/chatBotService';
 
 interface ChatBotProps {
-  onNewTransaction: (t: Transaction) => void;
+  onNewTransaction?: (t: Transaction) => void;
+  onClose?: () => void;
 }
 
-const ChatBot: React.FC<ChatBotProps> = () => {
-  const [messages, setMessages] = useState<{role: 'user' | 'ai', text: string, image?: string, isSample?: boolean}[]>([
-    { 
-      role: 'ai', 
-      text: 'Xin chào! Tôi là APPFUND Assistant - trợ lý quản lý quỹ. Bạn có thể gửi ảnh hoá đơn để tôi tự động cập nhật dữ liệu nhé!' 
+const ChatBot: React.FC<ChatBotProps> = ({ onClose }) => {
+  const [messages, setMessages] = useState<{ role: 'user' | 'ai', text: string, image?: string, isSample?: boolean }[]>([
+    {
+      role: 'ai',
+      text: 'Xin chào! Tôi là APPFUND Assistant - trợ lý quản lý quỹ. Bạn có thể gửi ảnh hoá đơn để tôi tự động cập nhật dữ liệu nhé!'
     },
     {
       role: 'user',
@@ -35,7 +36,7 @@ const ChatBot: React.FC<ChatBotProps> = () => {
   ]);
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
   const [inputText, setInputText] = useState('');
-  const [stagedFile, setStagedFile] = useState<{data: string, type: string} | null>(null);
+  const [stagedFile, setStagedFile] = useState<{ data: string, type: string } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -51,9 +52,9 @@ const ChatBot: React.FC<ChatBotProps> = () => {
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      setMessages(prev => [...prev, { 
-        role: 'ai', 
-        text: '❌ Vui lòng chọn file hình ảnh (jpg, png, etc.)' 
+      setMessages(prev => [...prev, {
+        role: 'ai',
+        text: '❌ Vui lòng chọn file hình ảnh (jpg, png, etc.)'
       }]);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -64,9 +65,9 @@ const ChatBot: React.FC<ChatBotProps> = () => {
     // Validate file size (max 10MB)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      setMessages(prev => [...prev, { 
-        role: 'ai', 
-        text: '❌ File quá lớn! Vui lòng chọn file nhỏ hơn 10MB' 
+      setMessages(prev => [...prev, {
+        role: 'ai',
+        text: '❌ File quá lớn! Vui lòng chọn file nhỏ hơn 10MB'
       }]);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -75,7 +76,7 @@ const ChatBot: React.FC<ChatBotProps> = () => {
     }
 
     const reader = new FileReader();
-    
+
     reader.onload = (e) => {
       const result = e.target?.result;
       if (result && typeof result === 'string') {
@@ -84,9 +85,9 @@ const ChatBot: React.FC<ChatBotProps> = () => {
           type: file.type
         });
       } else {
-        setMessages(prev => [...prev, { 
-          role: 'ai', 
-          text: '❌ Lỗi khi đọc file. Vui lòng thử lại.' 
+        setMessages(prev => [...prev, {
+          role: 'ai',
+          text: '❌ Lỗi khi đọc file. Vui lòng thử lại.'
         }]);
       }
       // Reset input value to allow selecting the same file again
@@ -96,9 +97,9 @@ const ChatBot: React.FC<ChatBotProps> = () => {
     };
 
     reader.onerror = () => {
-      setMessages(prev => [...prev, { 
-        role: 'ai', 
-        text: '❌ Lỗi khi đọc file. Vui lòng thử lại.' 
+      setMessages(prev => [...prev, {
+        role: 'ai',
+        text: '❌ Lỗi khi đọc file. Vui lòng thử lại.'
       }]);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -110,10 +111,10 @@ const ChatBot: React.FC<ChatBotProps> = () => {
 
   const processImage = async (hint: 'INCOME' | 'EXPENSE') => {
     if (!stagedFile) return;
-    
+
     const base64Data = stagedFile.data;
     const mimeType = stagedFile.type;
-    
+
     setMessages(prev => [...prev, { role: 'user', text: `Phân tích ${hint === 'INCOME' ? 'chuyển khoản đóng quỹ' : 'hóa đơn chi tiêu'}.`, image: base64Data }]);
     setIsProcessing(true);
     const fileData = { ...stagedFile }; // Save file data before clearing
@@ -127,43 +128,43 @@ const ChatBot: React.FC<ChatBotProps> = () => {
           ...extracted
         };
         // onNewTransaction(newTransaction);
-        setMessages(prev => [...prev, { 
-          role: 'ai', 
-          text: `✅ Đã xong! Tôi đã ghi nhận: ${extracted.user_name || 'Giao dịch'}. Số tiền: ${new Intl.NumberFormat('vi-VN').format(extracted.amount)} VNĐ.` 
+        setMessages(prev => [...prev, {
+          role: 'ai',
+          text: `✅ Đã xong! Tôi đã ghi nhận: ${extracted.user_name || 'Giao dịch'}. Số tiền: ${new Intl.NumberFormat('vi-VN').format(extracted.amount)} VNĐ.`
         }]);
       } else {
         const extracted = await processExpenseImage(fileData.data, fileData.type);
         // await new Promise(resolve => setTimeout(resolve, 3000));
-      //   const extracted = [
-      //     {
-      //         "id": 21,
-      //         "created_at": "2026-01-08T23:34:16.781724+00:00",
-      //         "type": "EXPENSE",
-      //         "amount": 63000,
-      //         "user_id": null,
-      //         "image_url": null,
-      //         "description": "Thiên Food - Bánh Đúc Lá Dứa - Cao Thắng",
-      //         "transaction_date": "2026-01-02T00:00:00",
-      //         "status": "COMPLETED",
-      //         "err_message": null
-      //     },
-      //     {
-      //         "id": 22,
-      //         "created_at": "2026-01-08T23:34:16.781724+00:00",
-      //         "type": "EXPENSE",
-      //         "amount": 272150,
-      //         "user_id": null,
-      //         "image_url": null,
-      //         "description": "Chè Bưởi Vĩnh Long - Tô Hiến Thành",
-      //         "transaction_date": "2025-12-31T00:00:00",
-      //         "status": "COMPLETED",
-      //         "err_message": null
-      //     }
-      // ]
+        //   const extracted = [
+        //     {
+        //         "id": 21,
+        //         "created_at": "2026-01-08T23:34:16.781724+00:00",
+        //         "type": "EXPENSE",
+        //         "amount": 63000,
+        //         "user_id": null,
+        //         "image_url": null,
+        //         "description": "Thiên Food - Bánh Đúc Lá Dứa - Cao Thắng",
+        //         "transaction_date": "2026-01-02T00:00:00",
+        //         "status": "COMPLETED",
+        //         "err_message": null
+        //     },
+        //     {
+        //         "id": 22,
+        //         "created_at": "2026-01-08T23:34:16.781724+00:00",
+        //         "type": "EXPENSE",
+        //         "amount": 272150,
+        //         "user_id": null,
+        //         "image_url": null,
+        //         "description": "Chè Bưởi Vĩnh Long - Tô Hiến Thành",
+        //         "transaction_date": "2025-12-31T00:00:00",
+        //         "status": "COMPLETED",
+        //         "err_message": null
+        //     }
+        // ]
         // extracted can be an array of transactions
         const transactions = Array.isArray(extracted) ? extracted : [extracted];
         const totalAmount = transactions.reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0);
-        
+
         // Prepare messages for each bill
         const billMessages = transactions.map((tx: any, index: number) => {
           const newTransaction: Transaction = {
@@ -171,14 +172,14 @@ const ChatBot: React.FC<ChatBotProps> = () => {
             ...tx
           };
           // onNewTransaction(newTransaction);
-          
+
           // Create a separate message for each bill
           return {
             role: 'ai' as const,
             text: `📄 Hóa đơn ${index + 1}: ${tx.description || 'Không có mô tả'}\n💰 Số tiền: ${new Intl.NumberFormat('vi-VN').format(tx.amount || 0)} VNĐ`
           };
         });
-        
+
         // Add all bill messages and summary message at once
         setMessages(prev => [
           ...prev,
@@ -201,7 +202,7 @@ const ChatBot: React.FC<ChatBotProps> = () => {
     const text = inputText;
     setInputText('');
     setMessages(prev => [...prev, { role: 'user', text }]);
-    
+
     // Check if it's a food suggestion request
     if (text.toLowerCase().includes('ăn gì') || text.toLowerCase().includes('gợi ý')) {
       setIsProcessing(true);
@@ -235,33 +236,33 @@ const ChatBot: React.FC<ChatBotProps> = () => {
             <p className="text-[10px] text-white/70 tracking-widest font-black">Application Fund Tracker</p>
           </div>
         </div>
-        {/* <button 
-          onClick={triggerFoodSuggestion}
-          className="p-2 hover:bg-white/10 rounded-lg transition-colors group relative"
-          title="Gợi ý món ăn"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-          </svg>
-          <span className="absolute -bottom-8 right-0 bg-slate-800 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity">Gợi ý món ăn</span>
-        </button> */}
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+            title="Đóng"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
       </div>
 
       <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/50 scroll-smooth">
         {messages.map((m, i) => (
           <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[85%] p-3 rounded-2xl shadow-sm text-sm ${
-              m.role === 'user' 
-                ? 'bg-blue-600 text-white rounded-tr-none' 
+            <div className={`max-w-[85%] p-3 rounded-2xl shadow-sm text-sm ${m.role === 'user'
+                ? 'bg-blue-600 text-white rounded-tr-none'
                 : 'bg-white text-slate-700 rounded-tl-none border border-slate-100'
-            }`}>
+              }`}>
               {m.image && (
                 <div className="mb-2">
                   {m.isSample ? (
-                    <img 
-                      src={m.image} 
-                      alt="sample" 
-                      className="rounded-lg max-h-32 w-auto object-contain border border-white/20 cursor-pointer hover:opacity-80 transition-opacity shadow-sm" 
+                    <img
+                      src={m.image}
+                      alt="sample"
+                      className="rounded-lg max-h-32 w-auto object-contain border border-white/20 cursor-pointer hover:opacity-80 transition-opacity shadow-sm"
                       onClick={() => setEnlargedImage(m.image!)}
                     />
                   ) : (
@@ -292,67 +293,71 @@ const ChatBot: React.FC<ChatBotProps> = () => {
       </div>
 
       {/* Enlarged Image Modal */}
-      {enlargedImage && (
-        <div 
-          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
-          onClick={() => setEnlargedImage(null)}
-        >
-          <div className="relative max-w-4xl max-h-[90vh] w-full">
-            <button
-              onClick={() => setEnlargedImage(null)}
-              className="absolute -top-10 right-0 text-white hover:text-gray-300 transition-colors"
-            >
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            <img 
-              src={enlargedImage} 
-              alt="enlarged" 
-              className="w-full h-full object-contain rounded-lg"
-              onClick={(e) => e.stopPropagation()}
-            />
+      {
+        enlargedImage && (
+          <div
+            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+            onClick={() => setEnlargedImage(null)}
+          >
+            <div className="relative max-w-4xl max-h-[90vh] w-full">
+              <button
+                onClick={() => setEnlargedImage(null)}
+                className="absolute -top-10 right-0 text-white hover:text-gray-300 transition-colors"
+              >
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <img
+                src={enlargedImage}
+                alt="enlarged"
+                className="w-full h-full object-contain rounded-lg"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
-      {stagedFile && (
-        <div className="p-3 bg-blue-50 border-t border-blue-100 flex items-center gap-3 animate-slide-up">
-           <div className="relative">
-             <img src={stagedFile.data} className="w-16 h-16 object-cover rounded-lg border-2 border-white shadow-sm" alt="staged" />
-             <button onClick={() => setStagedFile(null)} className="absolute -top-2 -right-2 bg-orange-500 text-white rounded-full p-1 shadow-md">
-               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
-             </button>
-           </div>
-           <div className="flex-1 grid grid-cols-2 gap-2">
-             {/* <button 
+      {
+        stagedFile && (
+          <div className="p-3 bg-blue-50 border-t border-blue-100 flex items-center gap-3 animate-slide-up">
+            <div className="relative">
+              <img src={stagedFile.data} className="w-16 h-16 object-cover rounded-lg border-2 border-white shadow-sm" alt="staged" />
+              <button onClick={() => setStagedFile(null)} className="absolute -top-2 -right-2 bg-orange-500 text-white rounded-full p-1 shadow-md">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="flex-1 grid grid-cols-2 gap-2">
+              {/* <button 
               onClick={() => processImage('INCOME')}
               className="py-2 px-3 bg-blue-600 text-white rounded-xl text-xs font-bold shadow-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-1"
              >
                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                Đóng Quỹ
              </button> */}
-             <button 
-              onClick={() => processImage('EXPENSE')}
-              className="py-2 px-3 bg-orange-600 text-white rounded-xl text-xs font-bold shadow-lg hover:bg-orange-700 transition-all flex items-center justify-center gap-1"
-             >
-               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-               Chi Tiêu
-             </button>
-           </div>
-        </div>
-      )}
+              <button
+                onClick={() => processImage('EXPENSE')}
+                className="py-2 px-3 bg-orange-600 text-white rounded-xl text-xs font-bold shadow-lg hover:bg-orange-700 transition-all flex items-center justify-center gap-1"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Chi Tiêu
+              </button>
+            </div>
+          </div>
+        )
+      }
 
       <div className="p-4 bg-white border-t border-slate-100">
         <div className="flex gap-2 items-center">
-          <input 
-            type="file" 
-            accept="image/*" 
-            className="hidden" 
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
             ref={fileInputRef}
             onChange={handleFileChange}
           />
-          <button 
+          <button
             onClick={() => fileInputRef.current?.click()}
             className="flex-1 flex items-center justify-center gap-3 bg-white border-2 border-transparent bg-clip-padding rounded-2xl px-4 py-3 transition-all shadow-md hover:shadow-lg font-medium text-sm relative group"
             style={{
@@ -372,7 +377,7 @@ const ChatBot: React.FC<ChatBotProps> = () => {
             </svg>
             <span className="bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent font-semibold">Tải ảnh hóa đơn tại đây</span>
           </button>
-          
+
           {/* <input 
             type="text"
             placeholder="Nhập tin nhắn hoặc hỏi 'Ăn gì?'..."
@@ -397,7 +402,7 @@ const ChatBot: React.FC<ChatBotProps> = () => {
           </button> */}
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 
