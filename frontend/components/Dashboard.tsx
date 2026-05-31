@@ -31,10 +31,14 @@ const Dashboard: React.FC = () => {
     };
 
     fetchStats();
+    window.addEventListener('fund-data-updated', fetchStats);
     
     // Refresh every 60 seconds
     const intervalId = setInterval(fetchStats, 60000);
-    return () => clearInterval(intervalId);
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('fund-data-updated', fetchStats);
+    };
   }, []);
 
   const chartData = [

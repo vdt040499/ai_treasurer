@@ -1,7 +1,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { Member, Transaction } from '../types';
-import { MONTHS, MONTHLY_FEE } from '../constants';
+import { MONTHS } from '../constants';
 import { getCurrentMonth } from '../utils/time';
 import { createPaymentLink } from '../services/paymentService';
 
@@ -12,12 +12,20 @@ interface DebtTrackerProps {
 }
 
 const DebtTracker: React.FC<DebtTrackerProps> = ({ members, isLoading = false }) => {
-  const currentMonth = new Date().toISOString().substring(0, 7);
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const [processingPayment, setProcessingPayment] = useState<string | null>(null);
 
   const debts = useMemo(() => {
     return members.map(member => {
-      const unpaidMonths = MONTHS.filter(m => m <= currentMonth && !member.contributions.includes(m) && !member.exempts.includes(m));
+      const obligationMonths = member.fee_by_month
+        ? Object.keys(member.fee_by_month).sort()
+        : MONTHS.filter(m => m <= currentMonth);
+      const unpaidMonths = obligationMonths.filter(m => (
+        m <= currentMonth
+        && !member.contributions.includes(m)
+        && !member.exempts?.includes(m)
+      ));
 
       const totalDebt = -member.debt_amount;
       const debtDescription = member.debt_description;

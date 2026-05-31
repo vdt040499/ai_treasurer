@@ -10,9 +10,11 @@ export interface Transaction {
   type: TransactionType;
   amount: number;
   date: string;
+  transaction_date?: string;
   description: string;
   category: string;
-  user: Member;
+  user?: Member | null;
+  user_id?: number | null;
   created_at: string;
 }
 
@@ -22,6 +24,9 @@ export interface Member {
   avatar: string;
   created_at: string;
   contributions: string[];
+  exempts?: string[];
+  monthly_fee?: number;
+  fee_by_month?: Record<string, number>;
   debt_amount?: number;
   debt_description?: string;
 }

@@ -11,12 +11,12 @@ from app.models.transaction_entry_model import TransactionEntryCreate
 from app.models.debts_model import DebtCreate
 from fastapi import UploadFile, HTTPException
 from dotenv import load_dotenv
-from app.constants import MONTHLY_FEE
 
 from app.services.user_service import UserService
 from app.services.transaction_service import TransactionService
 from app.services.debt_service import DebtService
 from app.services.transaction_entry_service import TransactionEntryService
+from app.services.member_fee_service import MemberFeeService
 # Lazy import QueueManager to avoid circular dependency
 
 env_path = Path(__file__).parent.parent.parent / '.env'
@@ -67,6 +67,22 @@ class GeminiService:
         self.transaction_service = TransactionService()
         self.debt_service = DebtService()
         self.transaction_entry_service = TransactionEntryService()
+        self.member_fee_service = MemberFeeService()
+
+    def _get_next_fund_period_month(self, user_id: int, fallback_date: str) -> str:
+        latest_fund_entry_query = self.transaction_entry_service.client.table("transaction_entries").select("period_month").eq("user_id", user_id).in_("type", ["FUND", "EXEMPT"]).order("period_month", desc=True).limit(1)
+        latest_fund_entry_response = latest_fund_entry_query.execute()
+
+        if latest_fund_entry_response.data and len(latest_fund_entry_response.data) > 0:
+            latest_period_month = latest_fund_entry_response.data[0].get("period_month")
+            if latest_period_month:
+                year, month = latest_period_month.split("-")
+                year_int, month_int = int(year), int(month)
+                if month_int == 12:
+                    return f"{year_int + 1}-01"
+                return f"{year_int}-{month_int + 1:02d}"
+
+        return fallback_date[:7]
 
     def chat_with_ai(self, message: str):
         system_prompt = self._get_system_prompt()
@@ -90,13 +106,9 @@ class GeminiService:
         extracted_data = await self._extract_transaction_from_image(file, "INCOME")
         print('extracted_data', extracted_data)
         print('extracted_data.get("amount")', extracted_data.get("amount"))
-        print('MONTHLY_FEE', MONTHLY_FEE)
 
         if not extracted_data.get("user_from") or not extracted_data.get("id_from") or not extracted_data.get("amount"):
             raise HTTPException(status_code=400, detail="Không tìm thấy thông tin giao dịch hoặc số tiền chuyển khoản. Vui lòng thử lại")
-
-        if extracted_data.get("amount") < MONTHLY_FEE:
-            raise HTTPException(status_code=400, detail=f"Số tiền chuyển khoản phải lớn hơn {MONTHLY_FEE}")
         
         user_id = extracted_data.get("id_from")
         if isinstance(user_id, str) and user_id.isdigit():
@@ -112,7 +124,19 @@ class GeminiService:
                 else:
                     user_id = None
 
-        debt_amount = extracted_data.get("amount") - MONTHLY_FEE
+        if not user_id:
+            raise HTTPException(status_code=400, detail="Không tìm thấy thành viên phù hợp với giao dịch. Vui lòng thử lại")
+
+        next_period_month = self._get_next_fund_period_month(
+            user_id,
+            extracted_data.get("transaction_date") or datetime.now().strftime("%Y-%m-%d")
+        )
+        monthly_fee = self.member_fee_service.get_monthly_fee(user_id, next_period_month)
+
+        if extracted_data.get("amount") < monthly_fee:
+            raise HTTPException(status_code=400, detail=f"Số tiền chuyển khoản phải lớn hơn hoặc bằng {monthly_fee}")
+
+        debt_amount = extracted_data.get("amount") - monthly_fee
         
         transaction_data = TransactionCreate(
             type="INCOME",
@@ -130,34 +154,10 @@ class GeminiService:
 
         debt = self.debt_service.get_unpaid_debt(user_id)
 
-        # Get latest FUND transaction entry for this user to determine next period_month
-        latest_fund_entry_query = self.transaction_entry_service.client.table("transaction_entries").select("period_month").eq("user_id", user_id).eq("type", "FUND").order("created_at", desc=True).limit(1)
-        latest_fund_entry_response = latest_fund_entry_query.execute()
-        
-        if latest_fund_entry_response.data and len(latest_fund_entry_response.data) > 0:
-            latest_period_month = latest_fund_entry_response.data[0].get("period_month")
-            if latest_period_month:
-                # Calculate next month from latest period_month (e.g., "2026-01" -> "2026-02", "2026-12" -> "2027-01")
-                year, month = latest_period_month.split("-")
-                year_int, month_int = int(year), int(month)
-                if month_int == 12:
-                    next_year = year_int + 1
-                    next_month = 1
-                else:
-                    next_year = year_int
-                    next_month = month_int + 1
-                next_period_month = f"{next_year}-{next_month:02d}"
-            else:
-                # If no period_month, use transaction_date
-                next_period_month = extracted_data.get("transaction_date")[:7]
-        else:
-            # If no previous FUND entry, use transaction_date
-            next_period_month = extracted_data.get("transaction_date")[:7]
-
         transaction_entry_fund_data = TransactionEntryCreate(
             transaction_id=transaction.get("id"),
             user_id=user_id,
-            amount=MONTHLY_FEE,
+            amount=monthly_fee,
             type="FUND",
             period_month=next_period_month
         )

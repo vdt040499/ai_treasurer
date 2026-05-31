@@ -1,8 +1,4 @@
 
-import React from 'react';
-
-export const MONTHLY_FEE = 200000;
-
 export const CATEGORIES = [
   'Đóng quỹ',
   'Ăn uống',
