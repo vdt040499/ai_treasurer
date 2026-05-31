@@ -3,9 +3,9 @@ from app.services.payos_service import PayOSService
 from app.services.transaction_service import TransactionService
 from app.services.transaction_entry_service import TransactionEntryService
 from app.services.debt_service import DebtService
+from app.services.member_fee_service import MemberFeeService
 from app.models.transaction_model import TransactionCreate
 from app.models.transaction_entry_model import TransactionEntryCreate
-from app.constants import MONTHLY_FEE
 from pydantic import BaseModel
 from datetime import datetime
 import os
@@ -22,6 +22,7 @@ payos_service = PayOSService()
 transaction_service = TransactionService()
 transaction_entry_service = TransactionEntryService()
 debt_service = DebtService()
+member_fee_service = MemberFeeService()
 
 class CreatePaymentRequest(BaseModel):
     amount: int
@@ -157,8 +158,8 @@ async def payos_webhook(request: Request):
             raise HTTPException(status_code=500, detail="Failed to update transaction status")
         
         # 3. Tạo TransactionEntry cho nhiều tháng
-        logger.info(f"[WEBHOOK] Processing transaction entries - amount: {amount}, MONTHLY_FEE: {MONTHLY_FEE}")
-        if amount and amount >= MONTHLY_FEE:
+        logger.info(f"[WEBHOOK] Processing transaction entries - amount: {amount}")
+        if amount and amount > 0:
             # Lấy tháng hiện tại (YYYY-MM)
             current_date = datetime.now()
             current_month_str = current_date.strftime("%Y-%m")
@@ -207,11 +208,25 @@ async def payos_webhook(request: Request):
             # Tạo danh sách các tháng cần đóng
             temp_year, temp_month = start_year, start_month
             while (temp_year < current_year) or (temp_year == current_year and temp_month <= current_month):
-                if remaining_amount >= MONTHLY_FEE:
-                    month_str = f"{temp_year}-{temp_month:02d}"
+                month_str = f"{temp_year}-{temp_month:02d}"
+                monthly_fee = member_fee_service.get_monthly_fee(user_id, month_str)
+
+                if monthly_fee <= 0:
                     months_to_pay.append(month_str)
-                    remaining_amount -= MONTHLY_FEE
-                    logger.info(f"[WEBHOOK] Added month to pay list: {month_str}, remaining_amount: {remaining_amount}")
+                    logger.info(f"[WEBHOOK] Added zero-fee month to pay list: {month_str}, remaining_amount: {remaining_amount}")
+
+                    # Tính tháng tiếp theo
+                    if temp_month == 12:
+                        temp_year += 1
+                        temp_month = 1
+                    else:
+                        temp_month += 1
+                    continue
+
+                if remaining_amount >= monthly_fee:
+                    months_to_pay.append(month_str)
+                    remaining_amount -= monthly_fee
+                    logger.info(f"[WEBHOOK] Added month to pay list: {month_str}, monthly_fee: {monthly_fee}, remaining_amount: {remaining_amount}")
                     
                     # Tính tháng tiếp theo
                     if temp_month == 12:
@@ -220,18 +235,19 @@ async def payos_webhook(request: Request):
                     else:
                         temp_month += 1
                 else:
-                    logger.info(f"[WEBHOOK] Insufficient amount to pay next month - remaining_amount: {remaining_amount}, MONTHLY_FEE: {MONTHLY_FEE}")
+                    logger.info(f"[WEBHOOK] Insufficient amount to pay next month - remaining_amount: {remaining_amount}, monthly_fee: {monthly_fee}")
                     break
             
             logger.info(f"[WEBHOOK] Total months to pay: {len(months_to_pay)}, months: {months_to_pay}, remaining_amount: {remaining_amount}")
             
             # Tạo FUND entries cho các tháng thiếu
             for period_month in months_to_pay:
-                logger.info(f"[WEBHOOK] Creating FUND entry - transaction_id: {transaction_id}, user_id: {user_id}, period_month: {period_month}, amount: {MONTHLY_FEE}")
+                monthly_fee = member_fee_service.get_monthly_fee(user_id, period_month)
+                logger.info(f"[WEBHOOK] Creating FUND entry - transaction_id: {transaction_id}, user_id: {user_id}, period_month: {period_month}, amount: {monthly_fee}")
                 transaction_entry_fund_data = TransactionEntryCreate(
                     transaction_id=transaction_id,
                     user_id=user_id,
-                    amount=MONTHLY_FEE,
+                    amount=monthly_fee,
                     type="FUND",
                     period_month=period_month
                 )
@@ -277,32 +293,29 @@ async def payos_webhook(request: Request):
                     else:
                         logger.info(f"[WEBHOOK] No unpaid debt found")
                 
-                # Nếu còn dư và >= MONTHLY_FEE, tạo FUND entry cho tháng tiếp theo
-                if remaining_amount >= MONTHLY_FEE:
+                # Nếu còn dư đủ mức phí tháng tiếp theo, tạo FUND entry cho tháng tiếp theo
+                next_year = current_year + 1 if current_month == 12 else current_year
+                next_month = 1 if current_month == 12 else current_month + 1
+                next_period_month = f"{next_year}-{next_month:02d}"
+                next_monthly_fee = member_fee_service.get_monthly_fee(user_id, next_period_month)
+
+                if next_monthly_fee <= 0 or remaining_amount >= next_monthly_fee:
                     # Tính tháng tiếp theo sau current_month
-                    if current_month == 12:
-                        next_year = current_year + 1
-                        next_month = 1
-                    else:
-                        next_year = current_year
-                        next_month = current_month + 1
-                    next_period_month = f"{next_year}-{next_month:02d}"
-                    
-                    logger.info(f"[WEBHOOK] Creating FUND entry for next month - period_month: {next_period_month}, amount: {MONTHLY_FEE}")
+                    logger.info(f"[WEBHOOK] Creating FUND entry for next month - period_month: {next_period_month}, amount: {next_monthly_fee}")
                     transaction_entry_fund_data = TransactionEntryCreate(
                         transaction_id=transaction_id,
                         user_id=user_id,
-                        amount=MONTHLY_FEE,
+                        amount=next_monthly_fee,
                         type="FUND",
                         period_month=next_period_month
                     )
                     created_next_entry = transaction_entry_service.create_transaction_entry(transaction_entry_fund_data)
                     logger.info(f"[WEBHOOK] Next month FUND entry created: {created_next_entry}")
                     
-                    remaining_amount -= MONTHLY_FEE
+                    remaining_amount -= next_monthly_fee
                     logger.info(f"[WEBHOOK] Final remaining amount: {remaining_amount}")
                 else:
-                    logger.info(f"[WEBHOOK] Remaining amount ({remaining_amount}) is less than MONTHLY_FEE ({MONTHLY_FEE}), no further entries created")
+                    logger.info(f"[WEBHOOK] Remaining amount ({remaining_amount}) is less than next monthly fee ({next_monthly_fee}), no further entries created")
         
         logger.info(f"[WEBHOOK] Payment processing completed successfully - order_code: {order_code}, transaction_id: {transaction_id}")
         print(f"[WEBHOOK] ========== WEBHOOK COMPLETED SUCCESSFULLY ==========")

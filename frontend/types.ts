@@ -22,6 +22,9 @@ export interface Member {
   avatar: string;
   created_at: string;
   contributions: string[];
+  exempts?: string[];
+  monthly_fee?: number;
+  fee_by_month?: Record<string, number>;
   debt_amount?: number;
   debt_description?: string;
 }

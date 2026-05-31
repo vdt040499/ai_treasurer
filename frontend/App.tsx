@@ -24,7 +24,8 @@ const App: React.FC = () => {
   const [isDuckRaceOpen, setIsDuckRaceOpen] = useState<boolean>(false);
   const [isChatOpen, setIsChatOpen] = useState<boolean>(false);
 
-  const currentMonth = new Date().toISOString().substring(0, 7);
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
   useEffect(() => {
     let isFirstLoad = true;
@@ -123,7 +124,14 @@ const App: React.FC = () => {
 
   const debts = useMemo(() => {
     return members.map(member => {
-      const unpaidMonths = MONTHS.filter(m => m <= currentMonth && !member.contributions.includes(m) && !member.exempts.includes(m));
+      const obligationMonths = member.fee_by_month
+        ? Object.keys(member.fee_by_month).sort()
+        : MONTHS.filter(m => m <= currentMonth);
+      const unpaidMonths = obligationMonths.filter(m => (
+        m <= currentMonth
+        && !member.contributions.includes(m)
+        && !member.exempts?.includes(m)
+      ));
 
       const totalDebt = -member.debt_amount;
       const debtDescription = member.debt_description;
