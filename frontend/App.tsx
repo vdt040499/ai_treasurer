@@ -6,6 +6,7 @@ import MemberStatus from './components/MemberStatus';
 import BonusIncomeTracker from './components/BonusIncomeTracker';
 import ChatBot from './components/ChatBot';
 import FoodExpenseTracker from './components/FoodExpenseTracker';
+import FoodSuggestionSlider from './components/FoodSuggestionSlider';
 import DebtTracker from './components/DebtTracker';
 import DuckRaceModal from './components/DuckRaceModal';
 import { Transaction, Member, TransactionType } from './types';
@@ -220,6 +221,7 @@ const App: React.FC = () => {
             />
           </div>
           <div className="flex flex-col gap-6">
+            <FoodSuggestionSlider transactions={expenseTransactions} />
             <DebtTracker members={members} isLoading={isLoadingMembers} />
             <div className="p-6 rounded-3xl bg-gradient-to-br from-yellow-400 to-orange-500 text-white shadow-xl">
               <h3 className="text-xl font-bold mb-2">Hôm nay ăn gì ? 🦆</h3>

@@ -13,6 +13,10 @@ export interface Transaction {
   transaction_date?: string;
   description: string;
   category: string;
+  food_name?: string | null;
+  restaurant_name?: string | null;
+  source_url?: string | null;
+  image_url?: string | null;
   user?: Member | null;
   user_id?: number | null;
   created_at: string;

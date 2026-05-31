@@ -9,6 +9,10 @@ class TransactionBase(BaseModel):
     transaction_date: Optional[str] = None
     status: Optional[str] = None
     order_code: Optional[int] = None
+    food_name: Optional[str] = None
+    restaurant_name: Optional[str] = None
+    source_url: Optional[str] = None
+    image_url: Optional[str] = None
 
 class TransactionCreate(TransactionBase):
     pass
