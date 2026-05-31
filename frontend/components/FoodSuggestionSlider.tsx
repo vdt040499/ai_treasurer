@@ -13,7 +13,7 @@ interface FoodSuggestion {
   imageUrl: string;
   sourceUrl: string;
   count: number;
-  reason: 'frequent' | 'rare' | 'novel';
+  reason: 'frequent' | 'rare';
 }
 
 interface FoodGroup {
@@ -38,14 +38,6 @@ const FALLBACK_IMAGES = [
   'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=900&q=80'
 ];
 
-const NOVEL_SUGGESTIONS = [
-  { dish: 'Bánh tráng nướng', shop: 'Tìm quán mới trên ShopeeFood', keyword: 'bánh tráng nướng', imageUrl: 'https://images.unsplash.com/photo-1529042410759-befb1204b468?auto=format&fit=crop&w=900&q=80' },
-  { dish: 'Sữa chua trân châu', shop: 'Tìm quán mới trên ShopeeFood', keyword: 'sữa chua trân châu', imageUrl: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=900&q=80' },
-  { dish: 'Takoyaki', shop: 'Tìm quán mới trên ShopeeFood', keyword: 'takoyaki', imageUrl: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=900&q=80' },
-  { dish: 'Bánh crepe', shop: 'Tìm quán mới trên ShopeeFood', keyword: 'bánh crepe', imageUrl: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=900&q=80' },
-  { dish: 'Xôi chiên', shop: 'Tìm quán mới trên ShopeeFood', keyword: 'xôi chiên', imageUrl: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=900&q=80' }
-];
-
 const ARC_POSITIONS = [
   { x: 0, y: 0, scale: 1, rotate: 0, opacity: 1, zIndex: 40 },
   { x: 66, y: 22, scale: 0.66, rotate: 12, opacity: 0.78, zIndex: 30 },
@@ -68,16 +60,12 @@ const getFallbackImage = (key: string) => {
   return FALLBACK_IMAGES[hash % FALLBACK_IMAGES.length];
 };
 
-const getReasonLabel = (reason: FoodSuggestion['reason'], count: number) => {
+const getReasonLabel = (reason: FoodSuggestion['reason']) => {
   if (reason === 'frequent') {
     return `Ăn nhiều lần`;
   }
 
-  if (reason === 'rare') {
-    return `Lâu rồi chưa ăn`;
-  }
-
-  return 'Món mới';
+  return `Lâu rồi chưa ăn`;
 };
 
 const buildSuggestion = (group: FoodGroup, reason: FoodSuggestion['reason']): FoodSuggestion => ({
@@ -148,25 +136,9 @@ const FoodSuggestionSlider: React.FC<FoodSuggestionSliderProps> = ({ transaction
       .sort((a, b) => a.count - b.count || a.firstEatenAt - b.firstEatenAt)
       .slice(0, TOP_K);
 
-    const eatenIds = new Set(groups.map(group => group.id));
-    const novel = NOVEL_SUGGESTIONS
-      .filter(suggestion => !eatenIds.has(normalizeText(suggestion.dish)))
-      .slice(0, TOP_K)
-      .map((suggestion): FoodSuggestion => ({
-        id: `novel-${normalizeText(suggestion.dish)}`,
-        dish: suggestion.dish,
-        shop: suggestion.shop,
-        keyword: suggestion.keyword,
-        imageUrl: suggestion.imageUrl,
-        sourceUrl: getShopeeFoodUrl(suggestion.keyword),
-        count: 0,
-        reason: 'novel'
-      }));
-
     return [
       ...rare.map(group => buildSuggestion(group, 'rare')),
-      ...frequent.map(group => buildSuggestion(group, 'frequent')),
-      ...novel
+      ...frequent.map(group => buildSuggestion(group, 'frequent'))
     ];
   }, [transactions]);
 
@@ -258,13 +230,8 @@ const FoodSuggestionSlider: React.FC<FoodSuggestionSliderProps> = ({ transaction
                   <img src={suggestion.imageUrl} alt={suggestion.shop} className="absolute inset-0 w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
                   <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
-                    <span className={`px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${suggestion.reason === 'frequent'
-                      ? 'bg-orange-100 text-orange-700'
-                      : suggestion.reason === 'rare'
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'bg-emerald-100 text-emerald-700'
-                      }`}>
-                      {getReasonLabel(suggestion.reason, suggestion.count)}
+                    <span className={`px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${suggestion.reason === 'frequent' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>
+                      {getReasonLabel(suggestion.reason)}
                     </span>
                   </div>
                   <div className="absolute left-3 right-3 bottom-3">
