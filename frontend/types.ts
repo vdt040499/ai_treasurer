@@ -10,9 +10,11 @@ export interface Transaction {
   type: TransactionType;
   amount: number;
   date: string;
+  transaction_date?: string;
   description: string;
   category: string;
-  user: Member;
+  user?: Member | null;
+  user_id?: number | null;
   created_at: string;
 }
 

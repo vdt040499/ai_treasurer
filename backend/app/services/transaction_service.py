@@ -197,10 +197,16 @@ class TransactionService(BaseService):
         Returns:
             Dict with total_income, total_expense, and balance
         """
-        # Tổng thu: tổng transaction_entries có type = FUND
+        # Tổng thu: quỹ thành viên đã phân bổ theo tháng + các khoản bonus ngoài thành viên
         transaction_entries_query = self.client.table("transaction_entries").select("amount").eq("type", "FUND")
         transaction_entries_response = transaction_entries_query.execute()
-        total_income = sum(item.get("amount", 0) for item in transaction_entries_response.data)
+        fund_income = sum(item.get("amount", 0) for item in transaction_entries_response.data)
+
+        bonus_query = self.client.table(self.table_name).select("amount").eq("type", "INCOME").is_("user_id", "null").eq("status", "COMPLETED").gt("amount", 0)
+        bonus_response = bonus_query.execute()
+        bonus_income = sum(item.get("amount", 0) for item in bonus_response.data)
+
+        total_income = fund_income + bonus_income
         
         # Tổng chi: tổng transactions có type = EXPENSE
         expense_query = self.client.table(self.table_name).select("amount").eq("type", "EXPENSE").gt("amount", 0)

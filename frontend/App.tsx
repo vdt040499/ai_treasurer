@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Dashboard from './components/Dashboard';
 import TransactionList from './components/TransactionList';
 import MemberStatus from './components/MemberStatus';
+import BonusIncomeTracker from './components/BonusIncomeTracker';
 import ChatBot from './components/ChatBot';
 import FoodExpenseTracker from './components/FoodExpenseTracker';
 import DebtTracker from './components/DebtTracker';
@@ -19,6 +20,7 @@ const App: React.FC = () => {
   const [incomeTransactions, setIncomeTransactions] = useState<Transaction[]>([]);
   const [expenseTransactions, setExpenseTransactions] = useState<Transaction[]>([]);
   const [debtTransactions, setDebtTransactions] = useState<Transaction[]>([]);
+  const [bonusTransactions, setBonusTransactions] = useState<Transaction[]>([]);
   const [isLoadingMembers, setIsLoadingMembers] = useState<boolean>(true);
   const [isLoadingTransactions, setIsLoadingTransactions] = useState<boolean>(true);
   const [isDuckRaceOpen, setIsDuckRaceOpen] = useState<boolean>(false);
@@ -54,8 +56,9 @@ const App: React.FC = () => {
         const transactions = await getTransactions();
         const debts = await getDebts(true); // Get fully paid debts (is_fully_paid = true)
 
-        const incomeTransactions = transactions.filter(t => t.type === TransactionType.INCOME);
+        const incomeTransactions = transactions.filter(t => t.type === TransactionType.INCOME && (t.user || t.user_id));
         const expenseTransactions = transactions.filter(t => t.type === TransactionType.EXPENSE);
+        const bonusTransactions = transactions.filter(t => t.type === TransactionType.INCOME && !t.user && !t.user_id);
 
         // Map debts to transactions format
         const debtTransactions: Transaction[] = debts.map((debt: any) => ({
@@ -95,6 +98,15 @@ const App: React.FC = () => {
             return prev;
           }
           return debtTransactions;
+        });
+
+        setBonusTransactions(prev => {
+          const prevIds = new Set<string>(prev.map(t => t.id));
+          const newIds = new Set<string>(bonusTransactions.map(t => t.id));
+          if (prevIds.size === newIds.size && [...prevIds].every((id: string) => newIds.has(id))) {
+            return prev;
+          }
+          return bonusTransactions;
         });
       } catch (error) {
         console.error('Failed to fetch transactions:', error);
@@ -193,6 +205,10 @@ const App: React.FC = () => {
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           <div className="xl:col-span-2 flex flex-col gap-6">
             <MemberStatus members={members} isLoading={isLoadingMembers} />
+            <BonusIncomeTracker
+              transactions={bonusTransactions}
+              isLoading={isLoadingTransactions}
+            />
             <FoodExpenseTracker
               isLoading={isLoadingTransactions}
               transactions={expenseTransactions}
