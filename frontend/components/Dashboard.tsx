@@ -72,7 +72,7 @@ const Dashboard: React.FC = () => {
           <h3 className="text-3xl font-bold mt-1">{formatCurrency(stats.balance)}</h3>
         </div>
         <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
-          <p className="text-slate-500 text-sm font-medium">Tổng thu</p>
+          <p className="text-slate-500 text-sm font-medium">Tổng thu <i>(bao gồm tiền thưởng)</i></p>
           <h3 className="text-3xl font-bold mt-1 text-blue-600">{formatCurrency(stats.total_income)}</h3>
         </div>
         <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
